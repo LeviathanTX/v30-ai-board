@@ -1,0 +1,1 @@
+cd /Users/jeffl/Desktop/v21-ai-board && chmod +x quick-deploy.sh && ./quick-deploy.sh

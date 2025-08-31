@@ -1,0 +1,1 @@
+cd /Users/jeffl/Desktop/v21-ai-board && chmod +x deploy-v21-clean.sh && ./deploy-v21-clean.sh

@@ -1,0 +1,11 @@
+# Add this file to prevent committing sensitive files
+node_modules/
+.env.local
+.env
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.DS_Store
+.vercel
+build/
+dist/
