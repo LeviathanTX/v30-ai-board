@@ -182,12 +182,11 @@ export default function MeetingEnvironmentSelector({
       {/* Environment Options Dropdown */}
       {isOpen && !disabled && (
         <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-200 z-50 max-h-96 overflow-hidden">
-          <div className="flex flex-col h-full">
-            <div className="px-4 py-3 border-b border-gray-100">
-              <h3 className="font-semibold text-gray-800">Meeting Environment</h3>
-            </div>
-            
-            <div className="flex-1 overflow-y-auto p-2">
+          <div className="px-4 py-3 border-b border-gray-100">
+            <h3 className="font-semibold text-gray-800">Meeting Environment</h3>
+          </div>
+          
+          <div className="overflow-y-auto max-h-80 p-2">
             
 
             {/* Meeting Controls Panel */}
@@ -340,13 +339,13 @@ export default function MeetingEnvironmentSelector({
             })}
             </div>
           
+          </div>
+          
           {/* Environment Previews */}
           <div className="border-t border-gray-100 p-3 bg-gray-50">
             <div className="text-xs text-gray-600 text-center">
               Select an environment to change your meeting experience
             </div>
-          </div>
-          </div>
           </div>
         </div>
       )}

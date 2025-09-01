@@ -730,36 +730,97 @@ ${'='.repeat(60)}
             </div>
             
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
-              {advisors.map(advisor => (
-                <div
-                  key={advisor.id}
-                  className="p-3 rounded-lg bg-gray-50"
-                >
-                  <div className="flex items-start space-x-3">
-                    <span className="text-3xl">{advisor.avatar_emoji}</span>
-                    <div className="flex-1">
-                      <h4 className="font-medium text-gray-900">
-                        {advisor.name}
-                      </h4>
-                      <p className="text-sm text-gray-600">
-                        {advisor.role}
-                      </p>
-                      {advisor.expertise && advisor.expertise.length > 0 && (
-                        <div className="mt-2 flex flex-wrap gap-1">
-                          {advisor.expertise.slice(0, 3).map((skill, idx) => (
-                            <span
-                              key={idx}
-                              className="text-xs px-2 py-1 bg-gray-200 text-gray-700 rounded"
-                            >
-                              {skill}
-                            </span>
-                          ))}
+              {/* Select All/None Buttons */}
+              <div className="flex items-center justify-between mb-4 p-3 bg-gray-100 rounded-lg">
+                <span className="font-medium text-gray-700">Select Meeting Advisors</span>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => {
+                      // Select all advisors
+                      setAdvisors(state.advisors || []);
+                    }}
+                    className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
+                  >
+                    All ({state.advisors?.length || 0})
+                  </button>
+                  <button
+                    onClick={() => {
+                      // Clear all advisors
+                      setAdvisors([]);
+                    }}
+                    className="px-3 py-1 text-xs bg-gray-600 text-white rounded hover:bg-gray-700"
+                  >
+                    Clear
+                  </button>
+                </div>
+              </div>
+
+              {(state.advisors || []).map(advisor => {
+                const isSelected = advisors.some(a => a.id === advisor.id);
+                return (
+                  <div
+                    key={advisor.id}
+                    className={`p-3 rounded-lg cursor-pointer transition-colors ${
+                      isSelected 
+                        ? 'bg-purple-100 border-2 border-purple-300' 
+                        : 'bg-gray-50 border-2 border-transparent hover:bg-gray-100'
+                    }`}
+                    onClick={() => {
+                      if (isSelected) {
+                        // Remove advisor
+                        setAdvisors(advisors.filter(a => a.id !== advisor.id));
+                      } else {
+                        // Add advisor
+                        setAdvisors([...advisors, advisor]);
+                      }
+                    }}
+                  >
+                    <div className="flex items-start space-x-3">
+                      <span className="text-3xl">{advisor.avatar_emoji}</span>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between">
+                          <h4 className="font-medium text-gray-900">
+                            {advisor.name}
+                          </h4>
+                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                            isSelected 
+                              ? 'bg-purple-600 border-purple-600' 
+                              : 'border-gray-300'
+                          }`}>
+                            {isSelected && (
+                              <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                              </svg>
+                            )}
+                          </div>
                         </div>
-                      )}
+                        <p className="text-sm text-gray-600">
+                          {advisor.role}
+                        </p>
+                        {advisor.expertise && advisor.expertise.length > 0 && (
+                          <div className="mt-2 flex flex-wrap gap-1">
+                            {advisor.expertise.slice(0, 3).map((skill, idx) => (
+                              <span
+                                key={idx}
+                                className="text-xs px-2 py-1 bg-gray-200 text-gray-700 rounded"
+                              >
+                                {skill}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
+                );
+              })}
+              
+              {/* Summary */}
+              <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                <div className="text-sm text-blue-800">
+                  <strong>{advisors.length}</strong> advisor{advisors.length !== 1 ? 's' : ''} selected for your meeting
                 </div>
-              ))}
+              </div>
             </div>
             
             <div className="p-4 border-t border-gray-200">

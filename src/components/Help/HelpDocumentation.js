@@ -701,8 +701,14 @@ export default function HelpDocumentation() {
   const currentSection = helpSections.find(s => s.id === activeSection) || helpSections[0];
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl max-w-7xl w-full h-[90vh] flex overflow-hidden">
+    <div 
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+      onClick={closeHelp}
+    >
+      <div 
+        className="bg-white rounded-xl max-w-7xl w-full h-[90vh] flex overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Sidebar */}
         <div className="w-80 bg-gray-50 border-r border-gray-200 flex flex-col">
           <div className="p-4 border-b border-gray-200">
@@ -722,10 +728,50 @@ export default function HelpDocumentation() {
                 type="text"
                 placeholder="Search help topics..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  // Reset to first filtered section when searching
+                  if (e.target.value.trim()) {
+                    const filtered = helpSections.filter(section => {
+                      const query = e.target.value.toLowerCase();
+                      const title = section.title.toLowerCase();
+                      const content = section.content.toLowerCase();
+                      
+                      const stopWords = ['and', 'or', 'the', 'a', 'an', 'is', 'are', 'was', 'were', 'in', 'on', 'at', 'to', 'for', 'of', 'with'];
+                      const searchWords = query.split(/\s+/)
+                        .filter(word => word.length > 2)
+                        .filter(word => !stopWords.includes(word));
+                      
+                      if (searchWords.length === 0) return true;
+                      
+                      return searchWords.some(word => 
+                        title.includes(word) || content.includes(word)
+                      );
+                    });
+                    
+                    if (filtered.length > 0) {
+                      setActiveSection(filtered[0].id);
+                    }
+                  }
+                }}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
+            
+            {/* Search Results Indicator */}
+            {searchQuery.trim() && (
+              <div className="mt-2 text-xs text-gray-600">
+                {filteredSections.length} section{filteredSections.length !== 1 ? 's' : ''} found
+                {searchQuery.length > 0 && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="ml-2 text-blue-600 hover:text-blue-700 underline"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+            )}
           </div>
 
           <nav className="flex-1 overflow-y-auto p-2">
