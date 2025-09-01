@@ -4,13 +4,16 @@ import {
   Settings, User, CreditCard, Palette, Volume2, VolumeX, 
   Globe, Shield, FileText, Home, MessageSquare, Users, 
   Video, Bell, Moon, Sun, Monitor, Save, Check, X,
-  ArrowRight, TrendingUp, Sparkles, Building, Clock, BarChart
+  ArrowRight, TrendingUp, Sparkles, Building, Clock, BarChart,
+  Brain, Database, Download, Upload, Trash2, RefreshCw, Wifi
 } from 'lucide-react';
 import { useAppState } from '../../contexts/AppStateContext';
 import { useSupabase } from '../../contexts/SupabaseContext';
 import { useVoice } from '../../contexts/VoiceContext';
 import LegalFooter from '../../components/Legal/LegalFooter';
 import ContextHelp from '../../components/Help/ContextHelp';
+import { advisorService } from '../../services/supabase';
+import { openaiRealtimeService } from '../../services/openaiRealtime';
 
 export default function SettingsHub() {
   const { state, dispatch, actions } = useAppState();
@@ -27,6 +30,13 @@ export default function SettingsHub() {
     billingCycle: 'monthly'
   });
   const [saveStatus, setSaveStatus] = useState('');
+  
+  // Advisory Board Settings State
+  const [isLoading, setIsLoading] = useState(false);
+  const [openaiApiKey, setOpenaiApiKey] = useState(localStorage.getItem('openai_api_key') || '');
+  const [isVoiceConnected, setIsVoiceConnected] = useState(false);
+  const [voiceError, setVoiceError] = useState(null);
+  const [isTestingVoice, setIsTestingVoice] = useState(false);
 
   // Load settings from localStorage
   useEffect(() => {
@@ -35,6 +45,38 @@ export default function SettingsHub() {
       setSettings(prev => ({ ...prev, ...JSON.parse(savedSettings) }));
     }
   }, []);
+
+  // Voice control effects for Advisory Board
+  useEffect(() => {
+    const handleVoiceConnected = () => {
+      setIsVoiceConnected(true);
+      setVoiceError(null);
+    };
+
+    const handleVoiceDisconnected = () => {
+      setIsVoiceConnected(false);
+    };
+
+    const handleVoiceError = (err) => {
+      setVoiceError(err.message || 'Voice service error');
+      setIsVoiceConnected(false);
+    };
+
+    openaiRealtimeService.on('connected', handleVoiceConnected);
+    openaiRealtimeService.on('disconnected', handleVoiceDisconnected);
+    openaiRealtimeService.on('error', handleVoiceError);
+
+    return () => {
+      openaiRealtimeService.removeAllListeners();
+    };
+  }, []);
+
+  // Save API key to localStorage
+  useEffect(() => {
+    if (openaiApiKey) {
+      localStorage.setItem('openai_api_key', openaiApiKey);
+    }
+  }, [openaiApiKey]);
 
   // Save settings to localStorage
   const handleSaveSettings = () => {
@@ -45,6 +87,113 @@ export default function SettingsHub() {
 
   const updateSetting = (key, value) => {
     setSettings(prev => ({ ...prev, [key]: value }));
+  };
+
+  // Advisory Board Settings Handlers
+  const handleTestVoiceConnection = async () => {
+    if (!openaiApiKey) {
+      setVoiceError('Please enter your OpenAI API key first');
+      return;
+    }
+
+    setIsTestingVoice(true);
+    try {
+      await openaiRealtimeService.initialize(openaiApiKey);
+      await openaiRealtimeService.connect();
+      setTimeout(() => {
+        openaiRealtimeService.disconnect();
+        setIsTestingVoice(false);
+      }, 2000);
+    } catch (err) {
+      setVoiceError(err.message);
+      setIsTestingVoice(false);
+    }
+  };
+
+  const handleExportAdvisors = () => {
+    const advisorsData = {
+      timestamp: new Date().toISOString(),
+      advisors: state.advisors,
+      selectedAdvisors: state.selectedAdvisors,
+      customAdvisors: state.customAdvisors
+    };
+    
+    const blob = new Blob([JSON.stringify(advisorsData, null, 2)], { 
+      type: 'application/json' 
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `advisors-export-${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImportAdvisors = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const importedData = JSON.parse(e.target.result);
+        if (importedData.advisors && Array.isArray(importedData.advisors)) {
+          dispatch({ type: actions.SET_ADVISORS, payload: importedData.advisors });
+          if (importedData.selectedAdvisors) {
+            dispatch({ type: actions.SELECT_ADVISORS, payload: importedData.selectedAdvisors });
+          }
+          alert('Advisors imported successfully!');
+        } else {
+          throw new Error('Invalid file format');
+        }
+      } catch (error) {
+        alert('Failed to import advisors. Please check the file format.');
+      }
+    };
+    reader.readAsText(file);
+    event.target.value = '';
+  };
+
+  const handleResetToDefaults = async () => {
+    if (!window.confirm('This will reset all advisors to defaults and remove custom advisors. Are you sure?')) {
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      // Reload default advisors from database
+      const { data: defaultAdvisors, error } = await advisorService.getDefaultAdvisors();
+      if (error) throw error;
+
+      dispatch({ type: actions.SET_ADVISORS, payload: defaultAdvisors });
+      dispatch({ type: actions.SELECT_ADVISORS, payload: defaultAdvisors.slice(0, 5) });
+      
+      alert('Advisors reset to defaults successfully!');
+    } catch (error) {
+      console.error('Reset failed:', error);
+      alert('Failed to reset advisors. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleClearSelections = () => {
+    dispatch({ type: actions.SELECT_ADVISORS, payload: [] });
+  };
+
+  const handleSelectAll = () => {
+    dispatch({ type: actions.SELECT_ADVISORS, payload: state.advisors });
+  };
+
+  const handleSelectRecommended = () => {
+    // Select a recommended set: Host + diverse expertise
+    const recommended = state.advisors.filter(advisor => 
+      advisor.is_host || 
+      ['Chief Strategy Officer', 'CFO', 'CMO', 'Chief Technology Officer'].includes(advisor.role) ||
+      advisor.name === 'Mark Cuban'
+    ).slice(0, 5);
+    
+    dispatch({ type: actions.SELECT_ADVISORS, payload: recommended });
   };
 
   const pageOptions = [
@@ -107,6 +256,7 @@ export default function SettingsHub() {
   const tabs = [
     { id: 'general', name: 'General', icon: Settings },
     { id: 'account', name: 'Account', icon: User },
+    { id: 'advisors', name: 'Advisory Board', icon: Users },
     { id: 'subscription', name: 'Subscription', icon: CreditCard },
     { id: 'privacy', name: 'Privacy & Legal', icon: Shield }
   ];
@@ -441,6 +591,345 @@ export default function SettingsHub() {
     </div>
   );
 
+  const renderAdvisoryBoardSettings = () => (
+    <div className="space-y-8">
+      {/* Overview Stats */}
+      <div>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Advisory Board Overview</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-blue-50 p-4 rounded-lg">
+            <div className="text-2xl font-bold text-blue-600">{state.advisors?.length || 0}</div>
+            <div className="text-sm text-blue-800">Total Advisors</div>
+          </div>
+          <div className="bg-green-50 p-4 rounded-lg">
+            <div className="text-2xl font-bold text-green-600">{state.selectedAdvisors?.length || 0}</div>
+            <div className="text-sm text-green-800">Selected</div>
+          </div>
+          <div className="bg-purple-50 p-4 rounded-lg">
+            <div className="text-2xl font-bold text-purple-600">{state.customAdvisors?.length || 0}</div>
+            <div className="text-sm text-purple-800">Custom Advisors</div>
+          </div>
+        </div>
+      </div>
+
+      {/* General Preferences */}
+      <div>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Advisory Board Preferences</h3>
+        <div className="bg-gray-50 p-4 rounded-lg space-y-3">
+          <label className="flex items-center">
+            <input 
+              type="checkbox" 
+              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              defaultChecked 
+            />
+            <span className="ml-2 text-sm text-gray-700">Auto-select new advisors for meetings</span>
+          </label>
+          
+          <label className="flex items-center">
+            <input 
+              type="checkbox" 
+              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              defaultChecked 
+            />
+            <span className="ml-2 text-sm text-gray-700">Show advisor expertise in UI</span>
+          </label>
+          
+          <label className="flex items-center">
+            <input 
+              type="checkbox" 
+              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
+            />
+            <span className="ml-2 text-sm text-gray-700">Enable advisor knowledge base integration</span>
+          </label>
+        </div>
+      </div>
+
+      {/* Quick Selection Actions */}
+      <div>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Selection Actions</h3>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+          <button
+            onClick={handleSelectAll}
+            className="flex items-center justify-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            <Users className="w-4 h-4" />
+            <span>Select All</span>
+          </button>
+          
+          <button
+            onClick={handleClearSelections}
+            className="flex items-center justify-center space-x-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+          >
+            <X className="w-4 h-4" />
+            <span>Clear All</span>
+          </button>
+          
+          <button
+            onClick={handleSelectRecommended}
+            className="flex items-center justify-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+          >
+            <Users className="w-4 h-4" />
+            <span>Recommended</span>
+          </button>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            onClick={() => {
+              const coreTeam = state.advisors.filter(a => !a.is_custom && !a.is_celebrity);
+              dispatch({ type: actions.SELECT_ADVISORS, payload: coreTeam });
+            }}
+            className="px-3 py-2 text-sm bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200"
+          >
+            Core Team Only
+          </button>
+          
+          <button
+            onClick={() => {
+              const celebrities = state.advisors.filter(a => a.is_celebrity);
+              dispatch({ type: actions.SELECT_ADVISORS, payload: celebrities });
+            }}
+            className="px-3 py-2 text-sm bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200"
+          >
+            Celebrity Advisors
+          </button>
+          
+          <button
+            onClick={() => {
+              const sharks = state.advisors.filter(a => a.specialty_focus === 'venture_capital' || a.role.includes('Shark'));
+              dispatch({ type: actions.SELECT_ADVISORS, payload: sharks });
+            }}
+            className="px-3 py-2 text-sm bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200"
+          >
+            Shark Tank
+          </button>
+          
+          <button
+            onClick={() => {
+              const custom = state.advisors.filter(a => a.is_custom);
+              dispatch({ type: actions.SELECT_ADVISORS, payload: custom });
+            }}
+            className="px-3 py-2 text-sm bg-green-100 text-green-700 rounded-lg hover:bg-green-200"
+          >
+            Custom Only
+          </button>
+        </div>
+      </div>
+
+      {/* AI Service Configuration */}
+      <div>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+          <Brain className="w-5 h-5 mr-2 text-blue-600" />
+          AI Service Configuration
+        </h3>
+        
+        <div className="space-y-6 bg-gray-50 p-4 rounded-lg">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              OpenAI API Key (Required for Voice Control)
+            </label>
+            <div className="flex space-x-2">
+              <input
+                type="password"
+                value={openaiApiKey}
+                onChange={(e) => setOpenaiApiKey(e.target.value)}
+                placeholder="sk-..."
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <button
+                onClick={handleTestVoiceConnection}
+                disabled={!openaiApiKey || isTestingVoice}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+              >
+                {isTestingVoice ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                ) : (
+                  <Wifi className="w-4 h-4" />
+                )}
+                <span>{isTestingVoice ? 'Testing...' : 'Test'}</span>
+              </button>
+            </div>
+            {voiceError && (
+              <p className="mt-1 text-sm text-red-600">{voiceError}</p>
+            )}
+            {isVoiceConnected && !voiceError && (
+              <p className="mt-1 text-sm text-green-600 flex items-center">
+                <Wifi className="w-4 h-4 mr-1" />
+                Voice service connected successfully
+              </p>
+            )}
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Default AI Service for New Advisors
+              </label>
+              <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option>🤖 Anthropic Claude</option>
+                <option>🧠 OpenAI GPT</option>
+                <option>💎 Google Gemini</option>
+                <option>🌊 DeepSeek</option>
+              </select>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Response Style
+              </label>
+              <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option>Balanced</option>
+                <option>Creative</option>
+                <option>Precise</option>
+                <option>Detailed</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Voice Control Settings */}
+      <div>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+          <Volume2 className="w-5 h-5 mr-2 text-purple-600" />
+          Voice Control Settings
+        </h3>
+        
+        <div className="bg-purple-50 p-4 rounded-lg space-y-4">
+          <div className="space-y-3">
+            <label className="flex items-center">
+              <input 
+                type="checkbox" 
+                className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                defaultChecked 
+              />
+              <span className="ml-2 text-sm text-gray-700">Enable voice control for advisor management</span>
+            </label>
+            
+            <label className="flex items-center">
+              <input 
+                type="checkbox" 
+                className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                defaultChecked 
+              />
+              <span className="ml-2 text-sm text-gray-700">Auto-connect voice when editing advisors</span>
+            </label>
+            
+            <label className="flex items-center">
+              <input 
+                type="checkbox" 
+                className="rounded border-gray-300 text-purple-600 focus:ring-purple-500" 
+              />
+              <span className="ml-2 text-sm text-gray-700">Show voice transcription during editing</span>
+            </label>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Voice Model
+              </label>
+              <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500">
+                <option>gpt-4o-realtime-preview</option>
+                <option>gpt-4o-realtime-preview-2024-10-01</option>
+              </select>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Voice Type
+              </label>
+              <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500">
+                <option>alloy</option>
+                <option>echo</option>
+                <option>fable</option>
+                <option>onyx</option>
+                <option>nova</option>
+                <option>shimmer</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Data Management */}
+      <div>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+          <Database className="w-5 h-5 mr-2 text-green-600" />
+          Data Management
+        </h3>
+        
+        <div className="space-y-6">
+          <div>
+            <h4 className="text-sm font-medium text-gray-900 mb-3">Backup & Restore</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <button
+                onClick={handleExportAdvisors}
+                className="flex items-center justify-center space-x-2 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700"
+              >
+                <Download className="w-4 h-4" />
+                <span>Export Advisors</span>
+              </button>
+              
+              <label className="flex items-center justify-center space-x-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 cursor-pointer">
+                <Upload className="w-4 h-4" />
+                <span>Import Advisors</span>
+                <input
+                  type="file"
+                  accept=".json"
+                  onChange={handleImportAdvisors}
+                  className="hidden"
+                />
+              </label>
+            </div>
+          </div>
+
+          <div>
+            <h4 className="text-sm font-medium text-gray-900 mb-3">Reset Options</h4>
+            <div className="space-y-3">
+              <button
+                onClick={handleResetToDefaults}
+                disabled={isLoading}
+                className="flex items-center justify-center space-x-2 w-full px-4 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50"
+              >
+                {isLoading ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                ) : (
+                  <RefreshCw className="w-4 h-4" />
+                )}
+                <span>Reset to Defaults</span>
+              </button>
+              
+              <button
+                onClick={() => {
+                  if (window.confirm('This will remove all custom advisors. Are you sure?')) {
+                    const nonCustom = state.advisors.filter(a => !a.is_custom);
+                    dispatch({ type: actions.SET_ADVISORS, payload: nonCustom });
+                  }
+                }}
+                className="flex items-center justify-center space-x-2 w-full px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700"
+              >
+                <Trash2 className="w-4 h-4" />
+                <span>Remove Custom Advisors</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <h5 className="text-sm font-medium text-gray-900 mb-2">Data Storage</h5>
+            <p className="text-xs text-gray-600">
+              {user ? 
+                'Your advisor configurations are synced to the cloud and will be available across devices.' :
+                'Your advisor configurations are stored locally. Sign in to sync across devices.'
+              }
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="h-full flex flex-col bg-gray-50">
       {/* Header */}
@@ -477,6 +966,7 @@ export default function SettingsHub() {
         <div className="flex-1 overflow-y-auto p-6">
           {activeTab === 'general' && renderGeneralSettings()}
           {activeTab === 'account' && renderAccountSettings()}
+          {activeTab === 'advisors' && renderAdvisoryBoardSettings()}
           {activeTab === 'subscription' && renderSubscriptionSettings()}
           {activeTab === 'privacy' && renderPrivacySettings()}
         </div>

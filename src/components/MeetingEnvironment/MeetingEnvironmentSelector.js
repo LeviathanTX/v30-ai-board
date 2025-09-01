@@ -1,9 +1,9 @@
 // src/components/MeetingEnvironment/MeetingEnvironmentSelector.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   MessageSquare, Building, Waves, Clock, Play, Pause, Settings,
   Users, Trophy, Target, ChevronDown, ChevronUp, Timer, UserCheck,
-  UserX, CheckSquare, Square, ToggleLeft, ToggleRight
+  UserX, CheckSquare, Square, ToggleLeft, ToggleRight, X
 } from 'lucide-react';
 import { useAppState } from '../../contexts/AppStateContext';
 import ContextHelp from '../Help/ContextHelp';
@@ -47,6 +47,7 @@ export default function MeetingEnvironmentSelector({
 }) {
   const { state, dispatch, actions } = useAppState();
   const [isOpen, setIsOpen] = useState(false);
+  const sidebarRef = useRef(null);
   const [environmentAdvisors, setEnvironmentAdvisors] = useState({
     chat: [],
     boardroom: [],
@@ -91,6 +92,23 @@ export default function MeetingEnvironmentSelector({
   useEffect(() => {
     localStorage.setItem('environmentAdvisors', JSON.stringify(environmentAdvisors));
   }, [environmentAdvisors]);
+
+  // Handle click outside to close sidebar
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (sidebarRef.current && !sidebarRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen]);
 
 
   const handleStartEnhancedMeeting = () => {
@@ -159,7 +177,7 @@ export default function MeetingEnvironmentSelector({
   const hasAllSelected = currentAdvisors.length === allAdvisors.length;
 
   return (
-    <div className="relative">
+    <>
       {/* Environment Selector Trigger */}
       <button
         onClick={() => !disabled && setIsOpen(!isOpen)}
@@ -179,14 +197,27 @@ export default function MeetingEnvironmentSelector({
         )}
       </button>
 
-      {/* Environment Options Dropdown */}
+      {/* Meeting Environment Sidebar */}
       {isOpen && !disabled && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-200 z-50 max-h-96 overflow-hidden">
-          <div className="px-4 py-3 border-b border-gray-100">
-            <h3 className="font-semibold text-gray-800">Meeting Environment</h3>
+        <div 
+          ref={sidebarRef}
+          className="fixed top-0 right-0 h-full w-80 bg-white border-l border-gray-200 flex flex-col z-50 shadow-xl"
+        >
+          {/* Header */}
+          <div className="p-4 border-b border-gray-200">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold text-gray-900">Meeting Environment</h3>
+              <button
+                onClick={() => setIsOpen(false)}
+                className="p-1 rounded hover:bg-gray-100"
+              >
+                <X size={18} />
+              </button>
+            </div>
           </div>
-          
-          <div className="overflow-y-auto max-h-80 p-2">
+
+          {/* Content */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-4">
             
 
             {/* Meeting Controls Panel */}
@@ -290,6 +321,7 @@ export default function MeetingEnvironmentSelector({
 
             {/* Environment Options */}
             <div className="space-y-2">
+              <h4 className="text-sm font-semibold text-gray-800 mb-2">Environment Options</h4>
               {Object.values(MEETING_ENVIRONMENTS).map((env) => {
               const Icon = env.icon;
               const isSelected = env.id === currentEnvironment;
@@ -338,18 +370,17 @@ export default function MeetingEnvironmentSelector({
               );
             })}
             </div>
-          
           </div>
           
-          {/* Environment Previews */}
-          <div className="border-t border-gray-100 p-3 bg-gray-50">
+          {/* Footer */}
+          <div className="border-t border-gray-200 p-3 bg-gray-50">
             <div className="text-xs text-gray-600 text-center">
               Select an environment to change your meeting experience
             </div>
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
 

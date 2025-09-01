@@ -738,29 +738,30 @@ ${'='.repeat(60)}
             </div>
             
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
-              {/* Select All/None Buttons */}
-              <div className="flex items-center justify-between mb-4 p-3 bg-gray-100 rounded-lg">
-                <span className="font-medium text-gray-700">Select Meeting Advisors</span>
-                <div className="flex space-x-2">
-                  <button
-                    onClick={() => {
-                      // Select all advisors
-                      setSelectedAdvisors(state.advisors || []);
-                    }}
-                    className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
-                  >
-                    Select All
-                  </button>
-                  <button
-                    onClick={() => {
-                      // Deselect all advisors
-                      setSelectedAdvisors([]);
-                    }}
-                    className="px-3 py-1 text-xs bg-gray-600 text-white rounded hover:bg-gray-700"
-                  >
-                    Deselect All
-                  </button>
-                </div>
+              {/* Quick Actions */}
+              <div className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg mb-4">
+                <span className="text-sm font-medium text-gray-700">Quick Actions:</span>
+                <button
+                  onClick={() => {
+                    // Select all advisors
+                    setSelectedAdvisors(state.advisors || []);
+                  }}
+                  className="text-sm text-blue-600 hover:text-blue-700"
+                >
+                  Select All
+                </button>
+                <button
+                  onClick={() => {
+                    // Deselect all advisors
+                    setSelectedAdvisors([]);
+                  }}
+                  className="text-sm text-blue-600 hover:text-blue-700"
+                >
+                  Deselect All
+                </button>
+                <span className="text-sm text-gray-500">
+                  • Click advisors to select/deselect for meetings
+                </span>
               </div>
 
               {(state.advisors || []).map(advisor => {
