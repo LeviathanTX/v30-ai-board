@@ -4,6 +4,8 @@ import { useSupabase } from '../../contexts/SupabaseContext';
 import { useVoice } from '../../contexts/VoiceContext';
 import UnifiedSidebar from './UnifiedSidebar';
 import CommandPalette from './CommandPalette';
+import HelpProvider from '../Help/HelpProvider';
+import HelpDocumentation from '../Help/HelpDocumentation';
 
 // Import modules
 const moduleComponents = {
@@ -12,7 +14,7 @@ const moduleComponents = {
   advisors: React.lazy(() => import('../../modules/AdvisoryHub-CS21-v1/EnhancedAdvisoryHub')),
   ai: React.lazy(() => import('../../modules/AIHub-CS21-v2/AIHub')),
   meetings: React.lazy(() => import('../../modules/MeetingHub-CS21-v1/MeetingHub')),
-  subscription: React.lazy(() => import('../../modules/SubscriptionHub-CS21-v1/SubscriptionHub'))
+  settings: React.lazy(() => import('../../modules/SettingsHub-CS21-v1/SettingsHub'))
 };
 
 export default function CoreShell() {
@@ -20,6 +22,21 @@ export default function CoreShell() {
   const [showCommandPalette, setShowCommandPalette] = useState(false);
   const { state, dispatch } = useAppState();
   const { user } = useSupabase();
+
+  // Load default starting page from settings
+  useEffect(() => {
+    const savedSettings = localStorage.getItem('appSettings');
+    if (savedSettings) {
+      try {
+        const settings = JSON.parse(savedSettings);
+        if (settings.defaultPage) {
+          setActiveModule(settings.defaultPage);
+        }
+      } catch (error) {
+        console.error('Error loading default page setting:', error);
+      }
+    }
+  }, []);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -58,7 +75,7 @@ export default function CoreShell() {
           'advisors': 'advisors',
           'board': 'ai',
           'meetings': 'meetings',
-          'subscription': 'subscription'
+          'settings': 'settings'
         };
         const targetModule = Object.entries(moduleMap).find(([key]) => 
           command.target.toLowerCase().includes(key)
@@ -83,7 +100,8 @@ export default function CoreShell() {
   const ActiveModuleComponent = moduleComponents[activeModule];
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <HelpProvider>
+      <div className="flex h-screen bg-gray-50">
       {/* Single Unified Sidebar */}
       <UnifiedSidebar 
         activeModule={activeModule}
@@ -112,6 +130,10 @@ export default function CoreShell() {
           }}
         />
       )}
-    </div>
+
+      {/* Global Help Documentation */}
+      <HelpDocumentation />
+      </div>
+    </HelpProvider>
   );
 }

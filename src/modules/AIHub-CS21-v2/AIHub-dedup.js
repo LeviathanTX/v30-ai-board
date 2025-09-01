@@ -4,7 +4,7 @@ import {
   Send, Mic, MicOff, Settings, FileText, Users, X, Plus,
   Upload, Eye, EyeOff, Check, AlertCircle, User, Download,
   MessageSquare, Sparkles, Save, RefreshCw, Play, Square,
-  Calendar, Clock, UserCheck, Paperclip
+  Calendar, Clock, UserCheck, Paperclip, Volume2
 } from 'lucide-react';
 import { useAppState } from '../../contexts/AppStateContext';
 import { useVoice } from '../../contexts/VoiceContext';
@@ -12,6 +12,7 @@ import aiService from '../../services/aiService';
 import MeetingEnvironmentSelector from '../../components/MeetingEnvironment/MeetingEnvironmentSelector';
 import BoardRoomEnvironment from '../../components/MeetingEnvironment/BoardRoomEnvironment';
 import SharkTankEnvironment from '../../components/MeetingEnvironment/SharkTankEnvironment';
+import ContextHelp, { HelpTooltip } from '../../components/Help/ContextHelp';
 
 export default function AIHub() {
   const { state, dispatch, actions } = useAppState();
@@ -20,7 +21,6 @@ export default function AIHub() {
   const [isLoading, setIsLoading] = useState(false);
   const [showAdvisorPanel, setShowAdvisorPanel] = useState(false);
   const [showDocumentPanel, setShowDocumentPanel] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
   const [streamingMessage, setStreamingMessage] = useState('');
   const [currentEnvironment, setCurrentEnvironment] = useState('chat');
   const messagesEndRef = useRef(null);
@@ -406,13 +406,15 @@ ${'='.repeat(60)}
         <div className="bg-white border-t border-gray-200 px-6 py-4">
           <div className="flex items-end space-x-2">
             {/* Upload Icon */}
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-              title="Upload documents"
-            >
-              <Upload size={20} className="text-gray-600" />
-            </button>
+            <HelpTooltip content="Upload documents to provide context to your AI advisors">
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                title="Upload documents"
+              >
+                <Upload size={20} className="text-gray-600" />
+              </button>
+            </HelpTooltip>
             
             <div className="flex-1 relative">
               <textarea
@@ -421,22 +423,37 @@ ${'='.repeat(60)}
                 onChange={(e) => setMessage(e.target.value)}
                 onKeyPress={handleKeyPress}
                 placeholder="Type your question for the board..."
-                className="w-full px-4 py-2 pr-12 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-100 text-gray-900 placeholder-gray-500"
+                className="w-full px-4 py-2 pr-20 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-100 text-gray-900 placeholder-gray-500"
                 rows="3"
               />
               
-              {/* Voice Input Button */}
-              <button
-                onClick={isListening ? stopListening : startListening}
-                className={`absolute bottom-2 right-2 p-1.5 rounded-lg transition-colors ${
-                  isListening
-                    ? 'bg-red-100 text-red-600 hover:bg-red-200'
-                    : 'hover:bg-gray-200 text-gray-600'
-                }`}
-                title={isListening ? "Stop listening" : "Start voice input"}
-              >
-                {isListening ? <Mic size={18} /> : <MicOff size={18} />}
-              </button>
+              {/* Voice Controls */}
+              <div className="absolute bottom-2 right-2 flex items-center space-x-1">
+                {/* Voice Input Button */}
+                <HelpTooltip content="Click to start/stop voice input">
+                  <button
+                    onClick={isListening ? stopListening : startListening}
+                    className={`p-1.5 rounded-lg transition-colors ${
+                      isListening
+                        ? 'bg-red-100 text-red-600 hover:bg-red-200'
+                        : 'hover:bg-gray-200 text-gray-600'
+                    }`}
+                    title={isListening ? "Stop listening" : "Start voice input"}
+                  >
+                    {isListening ? <Mic size={18} /> : <MicOff size={18} />}
+                  </button>
+                </HelpTooltip>
+                
+                {/* Voice Output Button */}
+                <HelpTooltip content="Configure voice output settings and preferences">
+                  <button
+                    className="p-1.5 rounded-lg transition-colors hover:bg-gray-200 text-gray-600"
+                    title="Voice output settings"
+                  >
+                    <Volume2 size={18} />
+                  </button>
+                </HelpTooltip>
+              </div>
             </div>
             
             <button
@@ -551,16 +568,13 @@ ${'='.repeat(60)}
               <MeetingEnvironmentSelector 
                 currentEnvironment={currentEnvironment}
                 onEnvironmentChange={setCurrentEnvironment}
+                selectedAdvisors={advisors}
+                onAdvisorsChange={(newAdvisors) => {
+                  // Update the selected advisors in the app state or context
+                  // This would typically dispatch an action to update the global state
+                }}
               />
             </div>
-            
-            <button
-              onClick={() => setShowSettings(!showSettings)}
-              className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-              title="Settings"
-            >
-              <Settings size={20} className="text-gray-600" />
-            </button>
           </div>
         </div>
       </div>
@@ -761,64 +775,6 @@ ${'='.repeat(60)}
           </div>
         )}
 
-        {/* Settings Panel */}
-        {showSettings && (
-          <div className="w-80 bg-white border-l border-gray-200 p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-gray-900">Settings</h3>
-              <button
-                onClick={() => setShowSettings(false)}
-                className="p-1 rounded hover:bg-gray-100"
-              >
-                <X size={18} />
-              </button>
-            </div>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium text-gray-700">
-                  Response Style
-                </label>
-                <select className="mt-1 w-full px-3 py-2 rounded-lg border bg-white border-gray-300">
-                  <option>Professional</option>
-                  <option>Conversational</option>
-                  <option>Technical</option>
-                </select>
-              </div>
-              
-              <div>
-                <label className="text-sm font-medium text-gray-700">
-                  Auto-save Conversations
-                </label>
-                <div className="mt-1">
-                  <label className="flex items-center">
-                    <input type="checkbox" defaultChecked className="rounded" />
-                    <span className="ml-2 text-sm text-gray-600">
-                      Save conversation history
-                    </span>
-                  </label>
-                </div>
-              </div>
-              
-              <div className="pt-4 border-t">
-                <button
-                  onClick={() => {
-                    // Clear conversation history
-                    if (window.confirm('Clear all conversation history?')) {
-                      localStorage.removeItem('conversations');
-                      dispatch({ type: actions.SET_CONVERSATIONS, payload: [] });
-                      dispatch({ type: actions.SET_ACTIVE_CONVERSATION, payload: null });
-                      window.location.reload();
-                    }
-                  }}
-                  className="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm"
-                >
-                  Clear Conversation History
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
       
       {/* Hidden File Input */}
