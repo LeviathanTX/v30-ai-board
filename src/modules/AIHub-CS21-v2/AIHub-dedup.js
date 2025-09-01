@@ -4,7 +4,7 @@ import {
   Send, Mic, MicOff, Settings, FileText, Users, X, Plus,
   Upload, Eye, EyeOff, Check, AlertCircle, User, Download,
   MessageSquare, Sparkles, Save, RefreshCw, Play, Square,
-  Calendar, Clock, UserCheck, Paperclip, Volume2
+  Calendar, Clock, UserCheck, Paperclip, Volume2, Search
 } from 'lucide-react';
 import { useAppState } from '../../contexts/AppStateContext';
 import { useVoice } from '../../contexts/VoiceContext';
@@ -24,6 +24,8 @@ export default function AIHub() {
   const [streamingMessage, setStreamingMessage] = useState('');
   const [currentEnvironment, setCurrentEnvironment] = useState('chat');
   const [selectedAdvisors, setSelectedAdvisors] = useState([]);
+  const [hasInitializedAdvisors, setHasInitializedAdvisors] = useState(false);
+  const [advisorSearchTerm, setAdvisorSearchTerm] = useState('');
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
   const hasInitializedRef = useRef(false);
@@ -97,12 +99,25 @@ export default function AIHub() {
 
   const advisors = state.advisors || [];
   
-  // Initialize selectedAdvisors with all advisors on first load
+  // Filter advisors based on search term
+  const getFilteredAdvisors = () => {
+    if (!advisorSearchTerm) return advisors;
+    const searchLower = advisorSearchTerm.toLowerCase();
+    return advisors.filter(advisor => 
+      advisor.name.toLowerCase().includes(searchLower) ||
+      advisor.role?.toLowerCase().includes(searchLower) ||
+      advisor.specialty_focus?.toLowerCase().includes(searchLower) ||
+      advisor.background?.toLowerCase().includes(searchLower)
+    );
+  };
+  
+  // Initialize selectedAdvisors with all advisors on first load only
   useEffect(() => {
-    if (advisors.length > 0 && selectedAdvisors.length === 0) {
+    if (advisors.length > 0 && !hasInitializedAdvisors) {
       setSelectedAdvisors(advisors);
+      setHasInitializedAdvisors(true);
     }
-  }, [advisors.length, selectedAdvisors.length]);
+  }, [advisors.length, hasInitializedAdvisors]);
 
   // Handle file upload
   const handleFileUpload = async (e) => {
@@ -737,14 +752,35 @@ ${'='.repeat(60)}
               </div>
             </div>
             
+            {/* Search Bar */}
+            <div className="p-4 border-b border-gray-200">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                <input
+                  type="text"
+                  placeholder="Search advisors..."
+                  value={advisorSearchTerm}
+                  onChange={(e) => setAdvisorSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+            
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
               {/* Quick Actions */}
               <div className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg mb-4">
-                <span className="text-sm font-medium text-gray-700">Quick Actions:</span>
                 <button
                   onClick={() => {
-                    // Select all advisors
-                    setSelectedAdvisors(state.advisors || []);
+                    // Select all filtered advisors
+                    const filteredAdvisors = getFilteredAdvisors();
+                    // Merge with existing selections to avoid duplicates
+                    const newSelections = [...selectedAdvisors];
+                    filteredAdvisors.forEach(advisor => {
+                      if (!newSelections.some(a => a.id === advisor.id)) {
+                        newSelections.push(advisor);
+                      }
+                    });
+                    setSelectedAdvisors(newSelections);
                   }}
                   className="text-sm text-blue-600 hover:text-blue-700"
                 >
@@ -764,7 +800,7 @@ ${'='.repeat(60)}
                 </span>
               </div>
 
-              {(state.advisors || []).map(advisor => {
+              {getFilteredAdvisors().map(advisor => {
                 const isSelected = selectedAdvisors.some(a => a.id === advisor.id);
                 return (
                   <div
