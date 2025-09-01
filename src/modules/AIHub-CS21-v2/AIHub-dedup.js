@@ -749,16 +749,16 @@ ${'='.repeat(60)}
                     }}
                     className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
                   >
-                    All ({state.advisors?.length || 0})
+                    Select All
                   </button>
                   <button
                     onClick={() => {
-                      // Clear all advisors
+                      // Deselect all advisors
                       setSelectedAdvisors([]);
                     }}
                     className="px-3 py-1 text-xs bg-gray-600 text-white rounded hover:bg-gray-700"
                   >
-                    Clear
+                    Deselect All
                   </button>
                 </div>
               </div>
