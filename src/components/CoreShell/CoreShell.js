@@ -8,8 +8,8 @@ import CommandPalette from './CommandPalette';
 // Import modules
 const moduleComponents = {
   dashboard: React.lazy(() => import('../../modules/DashboardModule-CS21-v1/DashboardModule')),
-  documents: React.lazy(() => import('../../modules/DocumentHub-CS21-v1/DocumentHub')),
-  advisors: React.lazy(() => import('../../modules/AdvisoryHub-CS21-v1/AdvisoryHub')),
+  documents: React.lazy(() => import('../../modules/DocumentHub-CS21-v4/DocumentHub')),
+  advisors: React.lazy(() => import('../../modules/AdvisoryHub-CS21-v1/EnhancedAdvisoryHub')),
   ai: React.lazy(() => import('../../modules/AIHub-CS21-v2/AIHub')),
   meetings: React.lazy(() => import('../../modules/MeetingHub-CS21-v1/MeetingHub')),
   subscription: React.lazy(() => import('../../modules/SubscriptionHub-CS21-v1/SubscriptionHub'))

@@ -9,6 +9,9 @@ import {
 import { useAppState } from '../../contexts/AppStateContext';
 import { useVoice } from '../../contexts/VoiceContext';
 import aiService from '../../services/aiService';
+import MeetingEnvironmentSelector from '../../components/MeetingEnvironment/MeetingEnvironmentSelector';
+import BoardRoomEnvironment from '../../components/MeetingEnvironment/BoardRoomEnvironment';
+import SharkTankEnvironment from '../../components/MeetingEnvironment/SharkTankEnvironment';
 
 export default function AIHub() {
   const { state, dispatch, actions } = useAppState();
@@ -19,6 +22,7 @@ export default function AIHub() {
   const [showDocumentPanel, setShowDocumentPanel] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [streamingMessage, setStreamingMessage] = useState('');
+  const [currentEnvironment, setCurrentEnvironment] = useState('chat');
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
   const hasInitializedRef = useRef(false);
@@ -319,6 +323,168 @@ ${'='.repeat(60)}
     return Paperclip;
   };
 
+  // Render chat interface wrapped in selected environment
+  const renderChatInterface = () => {
+    const chatContent = (
+      <div className="flex-1 flex flex-col">
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto px-6 py-4">
+          {state.conversationMessages?.map((msg) => (
+            <div
+              key={msg.id}
+              className={`mb-4 ${msg.role === 'user' ? 'flex justify-end' : 'flex justify-start'}`}
+            >
+              <div className={`max-w-2xl ${msg.role === 'user' ? 'order-2' : 'order-1'}`}>
+                {msg.role === 'assistant' && (
+                  <div className="flex items-center space-x-2 mb-1">
+                    <span className="text-2xl">{msg.advisor?.avatar_emoji || '🤖'}</span>
+                    <span className="text-sm font-medium text-gray-700">
+                      {msg.advisor?.name}
+                    </span>
+                    <span className="text-xs text-gray-500">
+                      {msg.advisor?.role}
+                    </span>
+                  </div>
+                )}
+                
+                <div className={`rounded-lg px-4 py-2 ${
+                  msg.role === 'user'
+                    ? 'bg-blue-600 text-white'
+                    : msg.role === 'system'
+                    ? 'bg-yellow-50 text-yellow-800 border border-yellow-200'
+                    : 'bg-gray-100 text-gray-900'
+                }`}>
+                  <p className="whitespace-pre-wrap">{msg.content}</p>
+                  
+                  {msg.documents?.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {msg.documents.map(docId => {
+                        const doc = state.documents.find(d => d.id === docId);
+                        if (!doc) return null;
+                        return (
+                          <span
+                            key={docId}
+                            className={`text-xs px-2 py-1 rounded flex items-center space-x-1 ${
+                              msg.role === 'user'
+                                ? 'bg-blue-700 text-blue-100'
+                                : 'bg-gray-200 text-gray-600'
+                            }`}
+                          >
+                            <FileText size={12} />
+                            <span>{doc.name}</span>
+                          </span>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+                
+                <span className="text-xs text-gray-500 mt-1 block">
+                  {new Date(msg.timestamp).toLocaleTimeString()}
+                </span>
+              </div>
+            </div>
+          ))}
+
+          {isLoading && (
+            <div className="mb-4 flex justify-start">
+              <div className="rounded-lg px-4 py-2 bg-gray-100">
+                <div className="flex items-center space-x-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                  <span className="text-sm text-gray-600">
+                    Advisors are discussing...
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div ref={messagesEndRef} />
+        </div>
+
+        {/* Input Area */}
+        <div className="bg-white border-t border-gray-200 px-6 py-4">
+          <div className="flex items-end space-x-2">
+            {/* Upload Icon */}
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              title="Upload documents"
+            >
+              <Upload size={20} className="text-gray-600" />
+            </button>
+            
+            <div className="flex-1 relative">
+              <textarea
+                ref={inputRef}
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="Type your question for the board..."
+                className="w-full px-4 py-2 pr-12 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-100 text-gray-900 placeholder-gray-500"
+                rows="3"
+              />
+              
+              {/* Voice Input Button */}
+              <button
+                onClick={isListening ? stopListening : startListening}
+                className={`absolute bottom-2 right-2 p-1.5 rounded-lg transition-colors ${
+                  isListening
+                    ? 'bg-red-100 text-red-600 hover:bg-red-200'
+                    : 'hover:bg-gray-200 text-gray-600'
+                }`}
+                title={isListening ? "Stop listening" : "Start voice input"}
+              >
+                {isListening ? <Mic size={18} /> : <MicOff size={18} />}
+              </button>
+            </div>
+            
+            <button
+              onClick={handleSendMessage}
+              disabled={!message.trim() || isLoading}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center space-x-2 ${
+                message.trim() && !isLoading
+                  ? 'bg-blue-600 text-white hover:bg-blue-700'
+                  : 'bg-gray-200 text-gray-400'
+              }`}
+            >
+              <Send size={20} />
+              <span>Send</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+
+    // Wrap chat interface in selected environment
+    switch (currentEnvironment) {
+      case 'boardroom':
+        return (
+          <BoardRoomEnvironment
+            advisors={state.advisors || []}
+            selectedAdvisors={advisors}
+            messages={state.conversationMessages || []}
+            onMessageSend={handleSendMessage}
+          >
+            {chatContent}
+          </BoardRoomEnvironment>
+        );
+      case 'sharktank':
+        return (
+          <SharkTankEnvironment
+            advisors={state.advisors || []}
+            selectedAdvisors={advisors}
+            messages={state.conversationMessages || []}
+            onMessageSend={handleSendMessage}
+          >
+            {chatContent}
+          </SharkTankEnvironment>
+        );
+      default:
+        return chatContent;
+    }
+  };
+
   return (
     <div className="h-full flex flex-col bg-gray-50">
       {/* Header */}
@@ -380,6 +546,14 @@ ${'='.repeat(60)}
               )}
             </button>
             
+            {/* Meeting Environment Selector */}
+            <div className="mr-2">
+              <MeetingEnvironmentSelector 
+                currentEnvironment={currentEnvironment}
+                onEnvironmentChange={setCurrentEnvironment}
+              />
+            </div>
+            
             <button
               onClick={() => setShowSettings(!showSettings)}
               className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
@@ -393,135 +567,16 @@ ${'='.repeat(60)}
 
       {/* Main Content Area */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Chat Area */}
-        <div className="flex-1 flex flex-col">
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto px-6 py-4">
-            {state.conversationMessages?.map((msg) => (
-              <div
-                key={msg.id}
-                className={`mb-4 ${msg.role === 'user' ? 'flex justify-end' : 'flex justify-start'}`}
-              >
-                <div className={`max-w-2xl ${msg.role === 'user' ? 'order-2' : 'order-1'}`}>
-                  {msg.role === 'assistant' && (
-                    <div className="flex items-center space-x-2 mb-1">
-                      <span className="text-2xl">{msg.advisor?.avatar_emoji || '🤖'}</span>
-                      <span className="text-sm font-medium text-gray-700">
-                        {msg.advisor?.name}
-                      </span>
-                      <span className="text-xs text-gray-500">
-                        {msg.advisor?.role}
-                      </span>
-                    </div>
-                  )}
-                  
-                  <div className={`rounded-lg px-4 py-2 ${
-                    msg.role === 'user'
-                      ? 'bg-blue-600 text-white'
-                      : msg.role === 'system'
-                      ? 'bg-yellow-50 text-yellow-800 border border-yellow-200'
-                      : 'bg-gray-100 text-gray-900'
-                  }`}>
-                    <p className="whitespace-pre-wrap">{msg.content}</p>
-                    
-                    {msg.documents?.length > 0 && (
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        {msg.documents.map(docId => {
-                          const doc = state.documents.find(d => d.id === docId);
-                          if (!doc) return null;
-                          return (
-                            <span
-                              key={docId}
-                              className={`text-xs px-2 py-1 rounded flex items-center space-x-1 ${
-                                msg.role === 'user'
-                                  ? 'bg-blue-700 text-blue-100'
-                                  : 'bg-gray-200 text-gray-600'
-                              }`}
-                            >
-                              <FileText size={12} />
-                              <span>{doc.name}</span>
-                            </span>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                  
-                  <span className="text-xs text-gray-500 mt-1 block">
-                    {new Date(msg.timestamp).toLocaleTimeString()}
-                  </span>
-                </div>
-              </div>
-            ))}
-
-            {isLoading && (
-              <div className="mb-4 flex justify-start">
-                <div className="rounded-lg px-4 py-2 bg-gray-100">
-                  <div className="flex items-center space-x-2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                    <span className="text-sm text-gray-600">
-                      Advisors are discussing...
-                    </span>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            <div ref={messagesEndRef} />
+        {/* Environment-Wrapped Chat Area */}
+        {currentEnvironment === 'chat' ? (
+          <div className="flex-1">
+            {renderChatInterface()}
           </div>
-
-          {/* Input Area */}
-          <div className="bg-white border-t border-gray-200 px-6 py-4">
-            <div className="flex items-end space-x-2">
-              {/* Upload Icon */}
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                title="Upload documents"
-              >
-                <Upload size={20} className="text-gray-600" />
-              </button>
-              
-              <div className="flex-1 relative">
-                <textarea
-                  ref={inputRef}
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  placeholder="Type your question for the board..."
-                  className="w-full px-4 py-2 pr-12 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-100 text-gray-900 placeholder-gray-500"
-                  rows="3"
-                />
-                
-                {/* Voice Input Button */}
-                <button
-                  onClick={isListening ? stopListening : startListening}
-                  className={`absolute bottom-2 right-2 p-1.5 rounded-lg transition-colors ${
-                    isListening
-                      ? 'bg-red-100 text-red-600 hover:bg-red-200'
-                      : 'hover:bg-gray-200 text-gray-600'
-                  }`}
-                  title={isListening ? "Stop listening" : "Start voice input"}
-                >
-                  {isListening ? <Mic size={18} /> : <MicOff size={18} />}
-                </button>
-              </div>
-              
-              <button
-                onClick={handleSendMessage}
-                disabled={!message.trim() || isLoading}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center space-x-2 ${
-                  message.trim() && !isLoading
-                    ? 'bg-blue-600 text-white hover:bg-blue-700'
-                    : 'bg-gray-200 text-gray-400'
-                }`}
-              >
-                <Send size={20} />
-                <span>Send</span>
-              </button>
-            </div>
+        ) : (
+          <div className="flex-1 relative">
+            {renderChatInterface()}
           </div>
-        </div>
+        )}
 
         {/* Document Panel */}
         {showDocumentPanel && (

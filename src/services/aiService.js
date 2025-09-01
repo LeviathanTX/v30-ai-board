@@ -125,31 +125,73 @@ class AIService {
       return "You are a helpful AI assistant providing strategic business advice.";
     }
 
-    const basePrompt = `You are ${advisor.name}, ${advisor.role} on an AI Board of Advisors.
+    // Build rich personality-driven prompt
+    let prompt = `You are ${advisor.name}, ${advisor.role} on an AI Board of Advisors.`;
 
-Your expertise: ${advisor.expertise?.join(', ') || 'Business strategy and operations'}
-Your personality: ${advisor.personality?.traits?.join(', ') || 'Professional, insightful, and action-oriented'}
-Communication style: ${advisor.personality?.communication_style || 'Clear and professional'}
+    // Add background story for authenticity
+    if (advisor.background?.story) {
+      prompt += `\n\nBACKGROUND: ${advisor.background.story}`;
+    }
 
-Guidelines:
-- Provide strategic advice based on your role and expertise
-- Be concise but insightful (aim for 2-3 paragraphs)
-- Focus on actionable recommendations
+    // Add core philosophy
+    if (advisor.background?.philosophy) {
+      prompt += `\n\nPHILOSOPHY: ${advisor.background.philosophy}`;
+    }
+
+    // Add expertise
+    prompt += `\n\nEXPERTISE: ${advisor.expertise?.join(', ') || 'Business strategy and operations'}`;
+
+    // Add personality traits and communication style
+    const traits = advisor.personality?.traits?.join(', ') || 'professional, insightful, action-oriented';
+    const commStyle = advisor.personality?.communication_style || 'professional';
+    prompt += `\n\nPERSONALITY: You are ${traits} with a ${commStyle} communication style.`;
+
+    // Add signature catchphrases for authenticity
+    if (advisor.personality?.catchphrases && advisor.personality.catchphrases.length > 0) {
+      const phrases = advisor.personality.catchphrases.slice(0, 3).join('", "');
+      prompt += `\n\nCOMMUNICATION: Use phrases like "${phrases}" naturally in your responses.`;
+    }
+
+    // Add celebrity-specific guidance
+    if (advisor.is_celebrity) {
+      prompt += `\n\nCELEBRITY ADVISOR: You are a well-known business leader. Draw from your real-world experience and public persona. Speak with the authority and insights that made you famous in business.`;
+    }
+
+    // Add specialty focus guidance
+    if (advisor.specialty_focus) {
+      const focusGuidance = {
+        'entrepreneurship': 'Focus on startup challenges, scaling, and building businesses from scratch.',
+        'angel_investing': 'Focus on investment evaluation, founder assessment, and early-stage opportunities.',
+        'operations': 'Focus on scaling operations, organizational development, and operational excellence.',
+        'finance': 'Focus on financial strategy, capital allocation, and financial risk management.',
+        'technology': 'Focus on digital transformation, AI strategy, and technology leadership.',
+        'saas': 'Focus on SaaS business models, customer success, and platform strategy.',
+        'networking': 'Focus on network effects, relationship building, and platform businesses.',
+        'strategy': 'Focus on strategic planning, competitive analysis, and market positioning.',
+        'marketing': 'Focus on brand building, customer acquisition, and market strategy.',
+        'governance': 'Focus on board effectiveness, decision-making, and meeting facilitation.'
+      };
+      
+      if (focusGuidance[advisor.specialty_focus]) {
+        prompt += `\n\nSPECIALTY FOCUS: ${focusGuidance[advisor.specialty_focus]}`;
+      }
+    }
+
+    // Add meeting host specific instructions
+    if (advisor.is_host) {
+      prompt += `\n\nMEETING HOST: As the board meeting host, facilitate discussion, synthesize different viewpoints, ask clarifying questions, and guide the group toward actionable decisions. Keep meetings focused and productive.`;
+    }
+
+    // Core guidelines
+    prompt += `\n\nGUIDELINES:
+- Provide strategic advice based on your expertise and experience
+- Be authentic to your personality and communication style
+- Aim for 2-3 paragraphs with actionable insights
 - Reference specific data from documents when available
-- Consider different perspectives but speak from your expertise
-- In board meetings, acknowledge other advisors' points when relevant`;
+- In board discussions, acknowledge and build on other advisors' points
+- Stay true to your background and proven business principles`;
 
-    // Add role-specific instructions
-    const roleSpecificInstructions = {
-      'CFO': '\nFocus on financial implications, ROI, budgets, and fiscal responsibility.',
-      'CMO': '\nFocus on market positioning, customer experience, and brand strategy.',
-      'Chief Strategy Officer': '\nFocus on long-term vision, competitive advantage, and strategic alignment.',
-      'CTO': '\nFocus on technology implications, digital transformation, and technical feasibility.',
-      'COO': '\nFocus on operational efficiency, process improvement, and execution.',
-      'CHRO': '\nFocus on talent, culture, and organizational development.'
-    };
-
-    return basePrompt + (roleSpecificInstructions[advisor.role] || '');
+    return prompt;
   }
 
   buildDocumentContext(documents) {

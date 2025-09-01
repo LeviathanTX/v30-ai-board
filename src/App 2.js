@@ -106,11 +106,9 @@ function App() {
   return (
     <AppStateProvider>
       <SupabaseProvider>
-        <AIServiceProvider>
-          <VoiceProvider>
-            <AppContent />
-          </VoiceProvider>
-        </AIServiceProvider>
+        <VoiceProvider>
+          <AppContent />
+        </VoiceProvider>
       </SupabaseProvider>
     </AppStateProvider>
   );

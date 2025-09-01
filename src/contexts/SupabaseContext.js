@@ -48,7 +48,6 @@ export function SupabaseProvider({ children }) {
       const { data, error } = await authService.getCurrentUser();
       
       if (error || !data) {
-        console.log('No authenticated user');
         setUser(null);
         setLoading(false);
         return;
@@ -57,7 +56,9 @@ export function SupabaseProvider({ children }) {
       setUser(data);
       dispatch({ type: actions.SET_USER, payload: data });
     } catch (error) {
-      console.log('Auth check error:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Auth check error:', error);
+      }
       setUser(null);
     } finally {
       setLoading(false);
@@ -70,7 +71,9 @@ export function SupabaseProvider({ children }) {
 
     // Subscribe to auth changes
     const unsubscribe = authService.onAuthStateChange((event, session) => {
-      console.log('Auth state change:', event);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Auth state change:', event);
+      }
       
       if (event === 'SIGNED_IN' && session?.user) {
         setUser(session.user);

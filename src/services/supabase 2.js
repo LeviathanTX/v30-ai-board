@@ -391,36 +391,6 @@ export const advisorService = {
       .single();
     
     return { data, error };
-  },
-
-  // Update advisor
-  async updateAdvisor(advisorId, advisorData) {
-    if (!supabase) {
-      return { data: advisorData, error: null };
-    }
-    
-    const { data, error } = await supabase
-      .from('advisors')
-      .update(advisorData)
-      .eq('id', advisorId)
-      .select()
-      .single();
-    
-    return { data, error };
-  },
-
-  // Delete advisor
-  async deleteAdvisor(advisorId) {
-    if (!supabase) {
-      return { error: null };
-    }
-    
-    const { error } = await supabase
-      .from('advisors')
-      .delete()
-      .eq('id', advisorId);
-    
-    return { error };
   }
 };
 

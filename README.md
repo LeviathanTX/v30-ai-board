@@ -28,6 +28,37 @@ V30 represents the next evolution of the AI Board of Advisors platform, featurin
 - npm or yarn
 - Supabase account (for cloud features)
 
+### Setup & Deployment
+
+1. **Clone and Setup**:
+   ```bash
+   git clone [your-repo-url]
+   cd v30-ai-board
+   npm install
+   ```
+
+2. **Configure Database**:
+   ```bash
+   node setup-supabase.js  # Interactive setup wizard
+   node verify-supabase.js # Test connection
+   ```
+
+3. **Deploy**:
+   ```bash
+   # Full deployment with checks
+   ./deploy-v30.sh prod
+   
+   # Quick deployment (no checks)
+   ./quick-deploy.sh
+   ```
+
+### Deployment Options
+
+- `./deploy-v30.sh dev` - Development deployment with checks
+- `./deploy-v30.sh staging` - Staging deployment  
+- `./deploy-v30.sh prod` - Production deployment with confirmation
+- `./quick-deploy.sh` - Fast deployment without validation
+
 ### Installation
 ```bash
 git clone https://github.com/LeviathanTX/v30-ai-board.git
