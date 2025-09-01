@@ -441,6 +441,7 @@ export default function MeetingEnvironmentSelector({
               Select an environment to change your meeting experience
             </div>
           </div>
+          </div>
         </div>
       )}
     </div>
