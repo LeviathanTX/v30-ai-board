@@ -23,6 +23,7 @@ export default function AIHub() {
   const [showDocumentPanel, setShowDocumentPanel] = useState(false);
   const [streamingMessage, setStreamingMessage] = useState('');
   const [currentEnvironment, setCurrentEnvironment] = useState('chat');
+  const [selectedAdvisors, setSelectedAdvisors] = useState([]);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
   const hasInitializedRef = useRef(false);
@@ -95,6 +96,13 @@ export default function AIHub() {
   }, [transcript, isListening]);
 
   const advisors = state.advisors || [];
+  
+  // Initialize selectedAdvisors with all advisors on first load
+  useEffect(() => {
+    if (advisors.length > 0 && selectedAdvisors.length === 0) {
+      setSelectedAdvisors(advisors);
+    }
+  }, [advisors.length, selectedAdvisors.length]);
 
   // Handle file upload
   const handleFileUpload = async (e) => {
@@ -201,8 +209,8 @@ Key Points: ${doc.extractedData.keywords?.map(k => k.word).join(', ') || 'None i
 
     try {
       // Check if we have advisors
-      if (!advisors || advisors.length === 0) {
-        throw new Error('No advisors selected. Please go to the Advisors module to select advisors.');
+      if (!selectedAdvisors || selectedAdvisors.length === 0) {
+        throw new Error('No advisors selected. Please select advisors from the Advisors panel.');
       }
 
       // Add document context to the message if documents are selected
@@ -213,7 +221,7 @@ Key Points: ${doc.extractedData.keywords?.map(k => k.word).join(', ') || 'None i
       // Check if AI service is available
       if (!aiService.apiKey && !process.env.REACT_APP_ANTHROPIC_API_KEY) {
         // Simulate AI response for demo mode
-        const demoAdvisor = advisors[0];
+        const demoAdvisor = selectedAdvisors[0];
         const demoResponse = {
           id: `ai-demo-${Date.now()}`,
           role: 'assistant',
@@ -234,7 +242,7 @@ Key Points: ${doc.extractedData.keywords?.map(k => k.word).join(', ') || 'None i
         // Real API call
         const responses = await aiService.conductBoardMeeting(
           enhancedMessage,
-          advisors,
+          selectedAdvisors,
           state.meetingDocuments || [],
           { 
             rounds: 1,
@@ -737,7 +745,7 @@ ${'='.repeat(60)}
                   <button
                     onClick={() => {
                       // Select all advisors
-                      setAdvisors(state.advisors || []);
+                      setSelectedAdvisors(state.advisors || []);
                     }}
                     className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
                   >
@@ -746,7 +754,7 @@ ${'='.repeat(60)}
                   <button
                     onClick={() => {
                       // Clear all advisors
-                      setAdvisors([]);
+                      setSelectedAdvisors([]);
                     }}
                     className="px-3 py-1 text-xs bg-gray-600 text-white rounded hover:bg-gray-700"
                   >
@@ -756,7 +764,7 @@ ${'='.repeat(60)}
               </div>
 
               {(state.advisors || []).map(advisor => {
-                const isSelected = advisors.some(a => a.id === advisor.id);
+                const isSelected = selectedAdvisors.some(a => a.id === advisor.id);
                 return (
                   <div
                     key={advisor.id}
@@ -768,10 +776,10 @@ ${'='.repeat(60)}
                     onClick={() => {
                       if (isSelected) {
                         // Remove advisor
-                        setAdvisors(advisors.filter(a => a.id !== advisor.id));
+                        setSelectedAdvisors(selectedAdvisors.filter(a => a.id !== advisor.id));
                       } else {
                         // Add advisor
-                        setAdvisors([...advisors, advisor]);
+                        setSelectedAdvisors([...selectedAdvisors, advisor]);
                       }
                     }}
                   >
@@ -818,7 +826,7 @@ ${'='.repeat(60)}
               {/* Summary */}
               <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
                 <div className="text-sm text-blue-800">
-                  <strong>{advisors.length}</strong> advisor{advisors.length !== 1 ? 's' : ''} selected for your meeting
+                  <strong>{selectedAdvisors.length}</strong> advisor{selectedAdvisors.length !== 1 ? 's' : ''} selected for your meeting
                 </div>
               </div>
             </div>
