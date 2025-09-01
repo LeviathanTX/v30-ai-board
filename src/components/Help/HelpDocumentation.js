@@ -677,10 +677,26 @@ export default function HelpDocumentation() {
     }
   ];
 
-  const filteredSections = helpSections.filter(section =>
-    section.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    section.content.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredSections = helpSections.filter(section => {
+    if (!searchQuery.trim()) return true;
+    
+    const query = searchQuery.toLowerCase();
+    const title = section.title.toLowerCase();
+    const content = section.content.toLowerCase();
+    
+    // Split search query into individual words, filtering out common stop words
+    const stopWords = ['and', 'or', 'the', 'a', 'an', 'is', 'are', 'was', 'were', 'in', 'on', 'at', 'to', 'for', 'of', 'with'];
+    const searchWords = query.split(/\s+/)
+      .filter(word => word.length > 2) // Filter out very short words
+      .filter(word => !stopWords.includes(word)); // Filter out stop words
+    
+    if (searchWords.length === 0) return true;
+    
+    // Check if any search words are found in either title or content
+    return searchWords.some(word => 
+      title.includes(word) || content.includes(word)
+    );
+  });
 
   const currentSection = helpSections.find(s => s.id === activeSection) || helpSections[0];
 

@@ -36,15 +36,6 @@ const MEETING_ENVIRONMENTS = {
     gradient: 'from-red-600 to-red-700',
     features: ['Timed pitches', 'Investor perspective', 'High pressure environment']
   },
-  ENHANCED: {
-    id: 'enhanced',
-    name: 'Enhanced Meeting',
-    description: 'Advanced meeting with all v24-v26 features',
-    icon: Trophy,
-    color: 'purple',
-    gradient: 'from-purple-600 to-purple-700',
-    features: ['Advanced analytics', 'Recording features', 'Custom workflows']
-  }
 };
 
 export default function MeetingEnvironmentSelector({ 
@@ -56,14 +47,10 @@ export default function MeetingEnvironmentSelector({
 }) {
   const { state, dispatch, actions } = useAppState();
   const [isOpen, setIsOpen] = useState(false);
-  const [showDetails, setShowDetails] = useState(false);
-  const [showAdvisorSelection, setShowAdvisorSelection] = useState(false);
-  const [showMeetingControls, setShowMeetingControls] = useState(false);
   const [environmentAdvisors, setEnvironmentAdvisors] = useState({
     chat: [],
     boardroom: [],
-    sharktank: [],
-    enhanced: []
+    sharktank: []
   });
   const [meetingSettings, setMeetingSettings] = useState({
     rounds: 2,
@@ -95,8 +82,7 @@ export default function MeetingEnvironmentSelector({
       setEnvironmentAdvisors({
         chat: advisors.slice(0, 3), // Last used or first 3
         boardroom: advisors.slice(0, 5), // Last used or first 5
-        sharktank: sharks, // All shark advisors by default
-        enhanced: advisors.slice(0, 8) // Enhanced gets more advisors
+        sharktank: sharks // All shark advisors by default
       });
     }
   }, [state.advisors]);
@@ -184,7 +170,6 @@ export default function MeetingEnvironmentSelector({
     }
 
     setIsOpen(false);
-    setShowMeetingControls(false);
   };
 
   const getMeetingEstimate = () => {
@@ -207,8 +192,6 @@ export default function MeetingEnvironmentSelector({
     }
     
     setIsOpen(false);
-    setShowDetails(false);
-    setShowAdvisorSelection(false);
   };
 
   const currentAdvisors = environmentAdvisors[currentEnvironment] || [];
@@ -253,36 +236,12 @@ export default function MeetingEnvironmentSelector({
       {isOpen && !disabled && (
         <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-200 z-50 overflow-hidden">
           <div className="p-2">
-            <div className="flex items-center justify-between px-3 py-2 mb-2">
-              <h3 className="font-semibold text-gray-800">Meeting Environment</h3>
-              <div className="flex items-center space-x-2">
-                <button
-                  onClick={() => setShowAdvisorSelection(!showAdvisorSelection)}
-                  className="text-sm text-purple-600 hover:text-purple-700 flex items-center space-x-1"
-                >
-                  <Users className="w-4 h-4" />
-                  <span>Advisors ({currentAdvisors.length})</span>
-                </button>
-                <button
-                  onClick={() => setShowMeetingControls(!showMeetingControls)}
-                  className="text-sm text-orange-600 hover:text-orange-700 flex items-center space-x-1"
-                >
-                  <Target className="w-4 h-4" />
-                  <span>Meeting</span>
-                </button>
-                <button
-                  onClick={() => setShowDetails(!showDetails)}
-                  className="text-sm text-blue-600 hover:text-blue-700 flex items-center space-x-1"
-                >
-                  <Settings className="w-4 h-4" />
-                  <span>{showDetails ? 'Hide' : 'Show'} Details</span>
-                </button>
-              </div>
+            <div className="px-3 py-2 mb-4">
+              <h3 className="font-semibold text-gray-800 mb-3">Meeting Environment</h3>
             </div>
             
             {/* Advisor Selection Panel */}
-            {showAdvisorSelection && (
-              <div className="mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+            <div className="mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center space-x-2">
                     <h4 className="text-sm font-semibold text-gray-800">
@@ -325,11 +284,9 @@ export default function MeetingEnvironmentSelector({
                   })}
                 </div>
               </div>
-            )}
 
             {/* Meeting Controls Panel */}
-            {showMeetingControls && (
-              <div className="mb-4 p-3 bg-orange-50 rounded-lg border border-orange-200">
+            <div className="mb-4 p-3 bg-orange-50 rounded-lg border border-orange-200">
                 <div className="flex items-center justify-between mb-3">
                   <h4 className="text-sm font-semibold text-gray-800">
                     Enhanced Meeting Configuration
@@ -426,9 +383,10 @@ export default function MeetingEnvironmentSelector({
                   <span>Start Enhanced Meeting</span>
                 </button>
               </div>
-            )}
-            
-            {Object.values(MEETING_ENVIRONMENTS).map((env) => {
+
+            {/* Environment Options */}
+            <div className="space-y-2">
+              {Object.values(MEETING_ENVIRONMENTS).map((env) => {
               const Icon = env.icon;
               const isSelected = env.id === currentEnvironment;
               
@@ -455,29 +413,27 @@ export default function MeetingEnvironmentSelector({
                         {env.description}
                       </p>
                       
-                      {showDetails && (
-                        <div className="mt-2 space-y-1">
-                          {env.features.map((feature, index) => (
-                            <div 
-                              key={index}
-                              className={`text-xs flex items-center space-x-1 ${
-                                isSelected ? 'text-white/70' : 'text-gray-500'
-                              }`}
-                            >
-                              <div className={`w-1 h-1 rounded-full ${
-                                isSelected ? 'bg-white/50' : 'bg-gray-400'
-                              }`} />
-                              <span>{feature}</span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
+                      <div className="mt-2 space-y-1">
+                        {env.features.map((feature, index) => (
+                          <div 
+                            key={index}
+                            className={`text-xs flex items-center space-x-1 ${
+                              isSelected ? 'text-white/70' : 'text-gray-500'
+                            }`}
+                          >
+                            <div className={`w-1 h-1 rounded-full ${
+                              isSelected ? 'bg-white/50' : 'bg-gray-400'
+                            }`} />
+                            <span>{feature}</span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </button>
               );
             })}
-          </div>
+            </div>
           
           {/* Environment Previews */}
           <div className="border-t border-gray-100 p-3 bg-gray-50">

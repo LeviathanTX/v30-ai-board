@@ -27,16 +27,16 @@ export default function BoardRoomEnvironment({
   }, []);
 
   const getAdvisorPosition = (index, total) => {
-    // Arrange advisors around the board table
+    // Arrange advisors around the board table, keeping bottom positions away from chat
     const positions = [
-      { top: '10%', left: '50%', transform: 'translateX(-50%)' }, // Head of table
-      { top: '25%', left: '85%', transform: 'translateX(-50%)' },  // Right side
-      { top: '50%', left: '90%', transform: 'translateX(-50%)' },  // Right middle
-      { top: '75%', left: '85%', transform: 'translateX(-50%)' },  // Right bottom
-      { top: '90%', left: '50%', transform: 'translateX(-50%)' },  // Foot of table
-      { top: '75%', left: '15%', transform: 'translateX(-50%)' },  // Left bottom
-      { top: '50%', left: '10%', transform: 'translateX(-50%)' },  // Left middle
-      { top: '25%', left: '15%', transform: 'translateX(-50%)' },  // Left side
+      { top: '15%', left: '50%', transform: 'translateX(-50%)' }, // Head of table
+      { top: '25%', left: '82%', transform: 'translateX(-50%)' },  // Right side
+      { top: '45%', left: '88%', transform: 'translateX(-50%)' },  // Right middle
+      { top: '65%', left: '82%', transform: 'translateX(-50%)' },  // Right bottom (moved up)
+      { top: '75%', left: '50%', transform: 'translateX(-50%)' },  // Foot of table (moved up)
+      { top: '65%', left: '18%', transform: 'translateX(-50%)' },  // Left bottom (moved up)
+      { top: '45%', left: '12%', transform: 'translateX(-50%)' },  // Left middle
+      { top: '25%', left: '18%', transform: 'translateX(-50%)' },  // Left side
     ];
     
     return positions[index % positions.length];
@@ -188,8 +188,8 @@ export default function BoardRoomEnvironment({
       </div>
 
       {/* Main Chat Interface */}
-      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 w-full max-w-4xl px-4">
-        <div className="bg-black/60 backdrop-blur-sm rounded-xl border border-white/10 p-4">
+      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 w-full max-w-4xl px-4 z-30">
+        <div className="bg-black/70 backdrop-blur-sm rounded-xl border border-white/20 p-4 shadow-2xl">
           {children}
         </div>
       </div>

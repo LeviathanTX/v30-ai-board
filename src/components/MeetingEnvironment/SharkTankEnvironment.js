@@ -30,13 +30,13 @@ export default function SharkTankEnvironment({
   ).slice(0, 5); // Maximum 5 sharks
 
   const getSharkPosition = (index, total) => {
-    // Arrange sharks in a semi-circle facing the entrepreneur
+    // Arrange sharks in a semi-circle facing the entrepreneur, keeping them away from chat area
     const positions = [
-      { bottom: '15%', left: '10%' },   // Far left
-      { bottom: '20%', left: '25%' },   // Left
-      { bottom: '25%', left: '50%', transform: 'translateX(-50%)' }, // Center
-      { bottom: '20%', right: '25%' },  // Right
-      { bottom: '15%', right: '10%' },  // Far right
+      { bottom: '30%', left: '8%' },   // Far left
+      { bottom: '35%', left: '22%' },   // Left
+      { bottom: '40%', left: '50%', transform: 'translateX(-50%)' }, // Center
+      { bottom: '35%', right: '22%' },  // Right
+      { bottom: '30%', right: '8%' },  // Far right
     ];
     
     return positions[index % positions.length];
@@ -229,7 +229,7 @@ export default function SharkTankEnvironment({
           })}
 
           {/* Entrepreneur Stage Platform */}
-          <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2">
+          <div className="absolute bottom-32 left-1/2 transform -translate-x-1/2">
             <div className={`
               w-96 h-4 bg-gradient-to-r from-gray-700 via-gray-600 to-gray-700 rounded-full shadow-2xl
               ${stageSpotlight ? 'shadow-yellow-500/20' : ''}
@@ -323,14 +323,14 @@ export default function SharkTankEnvironment({
       </div>
 
       {/* Main Chat Interface - Entrepreneur View */}
-      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 w-full max-w-4xl px-4">
+      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 w-full max-w-4xl px-4 z-30">
         <div className={`
-          backdrop-blur-sm rounded-xl border p-4 transition-all duration-1000
+          backdrop-blur-sm rounded-xl border p-4 transition-all duration-1000 shadow-2xl
           ${nervousLevel > 3 
-            ? 'bg-red-900/40 border-red-500/30' 
+            ? 'bg-red-900/60 border-red-500/50' 
             : nervousLevel > 1 
-            ? 'bg-yellow-900/40 border-yellow-500/30'
-            : 'bg-black/40 border-white/10'
+            ? 'bg-yellow-900/60 border-yellow-500/50'
+            : 'bg-black/60 border-white/20'
           }
         `}>
           {pitchStarted && (
@@ -368,7 +368,7 @@ export default function SharkTankEnvironment({
 
       {/* Entrepreneur Position Indicator */}
       {stageSpotlight && (
-        <div className="absolute bottom-32 left-1/2 transform -translate-x-1/2 text-white/60 text-center">
+        <div className="absolute bottom-48 left-1/2 transform -translate-x-1/2 text-white/60 text-center">
           <div className="bg-black/20 px-3 py-2 rounded-lg backdrop-blur-sm">
             <div className="text-sm font-medium">🎯 You're on stage</div>
             <div className="text-xs text-white/40">Make your pitch count!</div>
