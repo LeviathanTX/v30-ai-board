@@ -92,46 +92,6 @@ export default function MeetingEnvironmentSelector({
     localStorage.setItem('environmentAdvisors', JSON.stringify(environmentAdvisors));
   }, [environmentAdvisors]);
 
-  const toggleAdvisor = (advisorId) => {
-    const currentAdvisors = environmentAdvisors[currentEnvironment] || [];
-    const isSelected = currentAdvisors.some(a => a.id === advisorId);
-    const advisor = state.advisors?.find(a => a.id === advisorId);
-    
-    if (!advisor) return;
-
-    let newAdvisors;
-    if (isSelected) {
-      newAdvisors = currentAdvisors.filter(a => a.id !== advisorId);
-    } else {
-      newAdvisors = [...currentAdvisors, advisor];
-    }
-
-    setEnvironmentAdvisors(prev => ({
-      ...prev,
-      [currentEnvironment]: newAdvisors
-    }));
-
-    if (onAdvisorsChange) {
-      onAdvisorsChange(newAdvisors);
-    }
-  };
-
-  const toggleAllAdvisors = () => {
-    const currentAdvisors = environmentAdvisors[currentEnvironment] || [];
-    const allAdvisors = state.advisors || [];
-    const hasAll = currentAdvisors.length === allAdvisors.length;
-    
-    const newAdvisors = hasAll ? [] : [...allAdvisors];
-    
-    setEnvironmentAdvisors(prev => ({
-      ...prev,
-      [currentEnvironment]: newAdvisors
-    }));
-
-    if (onAdvisorsChange) {
-      onAdvisorsChange(newAdvisors);
-    }
-  };
 
   const handleStartEnhancedMeeting = () => {
     const currentAdvisors = environmentAdvisors[currentEnvironment] || [];
@@ -204,86 +164,31 @@ export default function MeetingEnvironmentSelector({
       <button
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
-        className={`
-          flex items-center space-x-3 px-4 py-3 rounded-lg border-2 transition-all
-          ${disabled 
-            ? 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed' 
-            : `bg-gradient-to-r ${currentEnv.gradient} text-white border-transparent hover:shadow-lg transform hover:-translate-y-0.5`
-          }
-        `}
+        className={`px-3 py-1.5 rounded-full flex items-center space-x-2 transition-colors ${
+          disabled 
+            ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+            : isOpen
+              ? 'bg-blue-100 text-blue-700'
+              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+        }`}
       >
-        <CurrentIcon className="w-5 h-5" />
-        <div className="flex-1 text-left">
-          <div className="font-semibold">{currentEnv.name}</div>
-          <div className={`text-sm ${disabled ? 'text-gray-400' : 'text-white/80'}`}>
-            {currentEnv.description}
-          </div>
-        </div>
+        <CurrentIcon size={16} />
+        <span className="text-sm font-medium">{currentEnv.name}</span>
         {!disabled && (
-          <div className="flex items-center space-x-2">
-            <ContextHelp 
-              helpKey="meeting-environment" 
-              position="left"
-              iconSize={14}
-              className="opacity-75 hover:opacity-100"
-            />
-            {isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-          </div>
+          isOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />
         )}
       </button>
 
       {/* Environment Options Dropdown */}
       {isOpen && !disabled && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-200 z-50 overflow-hidden">
-          <div className="p-2">
-            <div className="px-3 py-2 mb-4">
-              <h3 className="font-semibold text-gray-800 mb-3">Meeting Environment</h3>
+        <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-200 z-50 max-h-96 overflow-hidden">
+          <div className="flex flex-col h-full">
+            <div className="px-4 py-3 border-b border-gray-100">
+              <h3 className="font-semibold text-gray-800">Meeting Environment</h3>
             </div>
             
-            {/* Advisor Selection Panel */}
-            <div className="mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center space-x-2">
-                    <h4 className="text-sm font-semibold text-gray-800">
-                      Select Advisors for {currentEnv.name}
-                    </h4>
-                    <ContextHelp 
-                      helpKey="advisor-selection" 
-                      position="right"
-                      iconSize={14}
-                    />
-                  </div>
-                  <button
-                    onClick={toggleAllAdvisors}
-                    className="flex items-center space-x-1 text-sm text-blue-600 hover:text-blue-700"
-                  >
-                    {hasAllSelected ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
-                    <span>{hasAllSelected ? 'None' : 'All'}</span>
-                  </button>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto">
-                  {allAdvisors.map(advisor => {
-                    const isSelected = currentAdvisors.some(a => a.id === advisor.id);
-                    return (
-                      <button
-                        key={advisor.id}
-                        onClick={() => toggleAdvisor(advisor.id)}
-                        className={`flex items-center space-x-2 p-2 rounded-lg text-left transition-colors ${
-                          isSelected 
-                            ? 'bg-blue-100 text-blue-800 border border-blue-300' 
-                            : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
-                        }`}
-                      >
-                        {isSelected ? <CheckSquare className="w-4 h-4" /> : <Square className="w-4 h-4" />}
-                        <span className="text-xs">{advisor.avatar_emoji}</span>
-                        <span className="text-sm truncate">{advisor.name}</span>
-                        {advisor.is_celebrity && <span className="text-xs">⭐</span>}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
+            <div className="flex-1 overflow-y-auto p-2">
+            
 
             {/* Meeting Controls Panel */}
             <div className="mb-4 p-3 bg-orange-50 rounded-lg border border-orange-200">
@@ -440,6 +345,7 @@ export default function MeetingEnvironmentSelector({
             <div className="text-xs text-gray-600 text-center">
               Select an environment to change your meeting experience
             </div>
+          </div>
           </div>
           </div>
         </div>

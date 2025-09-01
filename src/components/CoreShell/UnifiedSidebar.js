@@ -14,10 +14,9 @@ import { HelpTooltip } from '../Help/ContextHelp';
 export default function UnifiedSidebar({ activeModule, setActiveModule, user }) {
   const [collapsed, setCollapsed] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
-  const [showAdvisorPanel, setShowAdvisorPanel] = useState(false);
   const { signOut } = useSupabase();
   const { isListening, isVoiceEnabled, toggleListening, toggleVoice } = useVoice();
-  const { state, dispatch, actions } = useAppState();
+  const { state } = useAppState();
   const { openHelp } = useHelp();
 
   const modules = [
@@ -28,39 +27,6 @@ export default function UnifiedSidebar({ activeModule, setActiveModule, user }) 
     { id: 'meetings', name: 'Meetings', icon: Video, color: 'pink' }
   ];
 
-  // Advisor management functions
-  const advisors = state.advisors || [];
-  const selectedAdvisors = state.selectedAdvisors || [];
-
-  const handleToggleAdvisor = (advisor) => {
-    const isSelected = selectedAdvisors.some(a => a.id === advisor.id);
-    
-    if (isSelected) {
-      dispatch({
-        type: actions.REMOVE_SELECTED_ADVISOR,
-        payload: advisor.id
-      });
-    } else {
-      dispatch({
-        type: actions.ADD_SELECTED_ADVISOR,
-        payload: advisor
-      });
-    }
-  };
-
-  const handleSelectAllAdvisors = () => {
-    dispatch({
-      type: actions.SELECT_ADVISORS,
-      payload: advisors
-    });
-  };
-
-  const handleClearAllAdvisors = () => {
-    dispatch({
-      type: actions.SELECT_ADVISORS,
-      payload: []
-    });
-  };
 
   return (
     <div className={`${collapsed ? 'w-16' : 'w-64'} bg-white border-r border-gray-200 flex flex-col transition-all duration-300`}>
@@ -134,109 +100,6 @@ export default function UnifiedSidebar({ activeModule, setActiveModule, user }) 
           );
         })}
       </nav>
-
-      {/* Selected Advisors Panel */}
-      {!collapsed && selectedAdvisors.length > 0 && (
-        <div className="border-t border-gray-200 px-2 py-3">
-          <button
-            onClick={() => setShowAdvisorPanel(!showAdvisorPanel)}
-            className="w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg"
-          >
-            <div className="flex items-center space-x-2">
-              <Users size={16} className="text-purple-600" />
-              <span>Selected Advisors ({selectedAdvisors.length})</span>
-            </div>
-            {showAdvisorPanel ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-          </button>
-          
-          {showAdvisorPanel && (
-            <div className="mt-2 space-y-2">
-              {/* Quick Actions */}
-              <div className="flex items-center justify-between text-xs px-3">
-                <button
-                  onClick={handleSelectAllAdvisors}
-                  className="text-blue-600 hover:text-blue-700 font-medium"
-                >
-                  All ({advisors.length})
-                </button>
-                <button
-                  onClick={handleClearAllAdvisors}
-                  className="text-gray-600 hover:text-gray-700 font-medium"
-                >
-                  Clear
-                </button>
-              </div>
-              
-              {/* Selected Advisors List */}
-              <div className="max-h-48 overflow-y-auto space-y-1">
-                {selectedAdvisors.map(advisor => (
-                  <div
-                    key={advisor.id}
-                    className="flex items-center justify-between px-3 py-2 bg-purple-50 rounded-lg"
-                  >
-                    <div className="flex items-center space-x-2">
-                      <span className="text-lg">{advisor.avatar_emoji || '👤'}</span>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-gray-900 truncate">
-                          {advisor.name}
-                        </p>
-                        <p className="text-xs text-gray-600 truncate">
-                          {advisor.role || 'Advisor'}
-                        </p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => handleToggleAdvisor(advisor)}
-                      className="p-1 hover:bg-purple-100 rounded-full"
-                      title="Remove from selection"
-                    >
-                      <X size={12} className="text-gray-600" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-              
-              {/* Add More Button */}
-              <button
-                onClick={() => setActiveModule('advisors')}
-                className="w-full flex items-center justify-center space-x-2 px-3 py-2 text-sm text-purple-600 hover:text-purple-700 hover:bg-purple-50 rounded-lg border border-purple-200"
-              >
-                <Plus size={14} />
-                <span>Add More Advisors</span>
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Available Advisors (when no advisors selected and not collapsed) */}
-      {!collapsed && selectedAdvisors.length === 0 && advisors.length > 0 && (
-        <div className="border-t border-gray-200 px-2 py-3">
-          <div className="px-3 py-2">
-            <p className="text-xs font-medium text-gray-700 mb-2">Available Advisors</p>
-            <div className="space-y-1 max-h-32 overflow-y-auto">
-              {advisors.slice(0, 3).map(advisor => (
-                <button
-                  key={advisor.id}
-                  onClick={() => handleToggleAdvisor(advisor)}
-                  className="w-full flex items-center space-x-2 px-2 py-1.5 text-left hover:bg-gray-50 rounded text-xs"
-                >
-                  <span className="text-sm">{advisor.avatar_emoji || '👤'}</span>
-                  <span className="truncate text-gray-700">{advisor.name}</span>
-                </button>
-              ))}
-              {advisors.length > 3 && (
-                <button
-                  onClick={() => setActiveModule('advisors')}
-                  className="w-full text-xs text-purple-600 hover:text-purple-700 py-1 text-left"
-                >
-                  +{advisors.length - 3} more advisors...
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Bottom Section */}
       <div className="border-t border-gray-200">
