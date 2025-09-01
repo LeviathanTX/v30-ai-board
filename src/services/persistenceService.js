@@ -34,13 +34,13 @@ class PersistenceService {
   setupEventListeners() {
     window.addEventListener('online', () => {
       this.isOnline = true;
-      console.log('🌐 Connection restored - syncing data...');
+      logger.debug('🌐 Connection restored - syncing data...');
       this.syncAll(); // Automatically sync when coming back online
     });
 
     window.addEventListener('offline', () => {
       this.isOnline = false;
-      console.log('📵 Working offline - changes will be saved locally');
+      logger.debug('📵 Working offline - changes will be saved locally');
     });
 
     // Save to local storage before page unload
@@ -90,7 +90,7 @@ class PersistenceService {
         }));
       }
     } catch (error) {
-      console.error('Failed to save to local storage:', error);
+      logger.error('Failed to save to local storage:', error);
       // If storage is full, try to clear old data
       if (error.name === 'QuotaExceededError') {
         this.clearOldLocalData();
@@ -109,7 +109,7 @@ class PersistenceService {
         return JSON.parse(savedState);
       }
     } catch (error) {
-      console.error('Failed to load from local storage:', error);
+      logger.error('Failed to load from local storage:', error);
     }
     return null;
   }
@@ -160,7 +160,7 @@ class PersistenceService {
 
       return { success: true, results };
     } catch (error) {
-      console.error('Sync failed:', error);
+      logger.error('Sync failed:', error);
       return { success: false, error: error.message };
     } finally {
       this.syncInProgress = false;
@@ -218,7 +218,7 @@ class PersistenceService {
       this.lastSyncTime.conversations = new Date().toISOString();
       return { success: true, count: mergedConversations.length };
     } catch (error) {
-      console.error('Conversation sync failed:', error);
+      logger.error('Conversation sync failed:', error);
       return { success: false, error: error.message };
     }
   }
@@ -267,7 +267,7 @@ class PersistenceService {
       this.lastSyncTime.documents = new Date().toISOString();
       return { success: true, count: mergedDocuments.length };
     } catch (error) {
-      console.error('Document sync failed:', error);
+      logger.error('Document sync failed:', error);
       return { success: false, error: error.message };
     }
   }
@@ -322,7 +322,7 @@ class PersistenceService {
       this.lastSyncTime.settings = new Date().toISOString();
       return { success: true };
     } catch (error) {
-      console.error('Settings sync failed:', error);
+      logger.error('Settings sync failed:', error);
       return { success: false, error: error.message };
     }
   }
@@ -403,7 +403,7 @@ class PersistenceService {
     // If there's a file that hasn't been uploaded, upload it
     if (file && !document.storage_path) {
       // File upload would go here - for now we just store the metadata
-      console.log('File upload pending for:', document.name);
+      logger.debug('File upload pending for:', document.name);
     }
   }
 
@@ -421,7 +421,7 @@ class PersistenceService {
       try {
         await this.executeQueuedOperation(operation);
       } catch (error) {
-        console.error('Queued operation failed:', error);
+        logger.error('Queued operation failed:', error);
         // Re-queue failed operations for retry
         this.syncQueue.push(operation);
       }
@@ -452,7 +452,7 @@ class PersistenceService {
           .eq('id', operation.data.id);
         break;
       default:
-        console.warn('Unknown operation type:', operation.type);
+        logger.warn('Unknown operation type:', operation.type);
     }
   }
 
@@ -506,9 +506,9 @@ class PersistenceService {
         }
       });
 
-      console.log('Cleared old local data to free up space');
+      logger.debug('Cleared old local data to free up space');
     } catch (error) {
-      console.error('Failed to clear old data:', error);
+      logger.error('Failed to clear old data:', error);
     }
   }
 

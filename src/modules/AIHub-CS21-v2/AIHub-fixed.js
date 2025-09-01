@@ -181,7 +181,7 @@ Content Preview: ${(doc.extractedData.text || doc.content || '').substring(0, 10
       }
       setStreamingMessage('');
     } catch (error) {
-      console.error('Error sending message:', error);
+      logger.error('Error sending message:', error);
       dispatch({
         type: actions.ADD_NOTIFICATION,
         payload: {

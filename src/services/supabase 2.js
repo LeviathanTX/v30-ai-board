@@ -7,7 +7,7 @@ const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
 // Check if environment variables are loaded (development only)
 if (process.env.NODE_ENV === 'development') {
   if (!supabaseUrl || !supabaseAnonKey) {
-    console.warn('Supabase credentials not found. Check your .env file.');
+    logger.warn('Supabase credentials not found. Check your .env file.');
   }
 }
 
@@ -35,7 +35,7 @@ export const authService = {
       
       return { data, error: null };
     } catch (error) {
-      console.error('Sign up error:', error);
+      logger.error('Sign up error:', error);
       return { data: null, error };
     }
   },
@@ -57,7 +57,7 @@ export const authService = {
       
       return { data: { ...data, session }, error: null };
     } catch (error) {
-      console.error('Sign in error:', error);
+      logger.error('Sign in error:', error);
       return { data: null, error };
     }
   },
@@ -92,7 +92,7 @@ export const documentService = {
   // Upload document to Supabase Storage
   async uploadDocument(file, userId) {
     if (!supabase) {
-      console.warn('Supabase not configured, using demo mode');
+      logger.warn('Supabase not configured, using demo mode');
       return {
         data: {
           id: `demo_${Date.now()}`,
@@ -112,7 +112,7 @@ export const documentService = {
       const fileName = `${userId}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
       
       // Upload to Supabase Storage
-      console.log('Uploading to Supabase Storage:', fileName);
+      logger.debug('Uploading to Supabase Storage:', fileName);
       const { data, error } = await supabase.storage
         .from('documents')
         .upload(fileName, file, {
@@ -121,7 +121,7 @@ export const documentService = {
         });
       
       if (error) {
-        console.error('Storage upload error:', error);
+        logger.error('Storage upload error:', error);
         // For demo mode, continue without actual upload
         return {
           data: {
@@ -153,7 +153,7 @@ export const documentService = {
         .single();
       
       if (dbError) {
-        console.error('Database insert error:', dbError);
+        logger.error('Database insert error:', dbError);
         // For demo mode, return mock data
         return {
           data: {
@@ -171,7 +171,7 @@ export const documentService = {
       
       return { data: docData, error: dbError };
     } catch (error) {
-      console.error('Upload error:', error);
+      logger.error('Upload error:', error);
       // Return demo data for development
       return {
         data: {
@@ -200,13 +200,13 @@ export const documentService = {
         .order('created_at', { ascending: false });
       
       if (error) {
-        console.error('Get documents error:', error);
+        logger.error('Get documents error:', error);
         return { data: [], error: null };
       }
       
       return { data: data || [], error };
     } catch (error) {
-      console.error('Get documents error:', error);
+      logger.error('Get documents error:', error);
       return { data: [], error: null };
     }
   },
@@ -230,7 +230,7 @@ export const documentService = {
       
       return { data: data || { id: documentId, ...updates }, error };
     } catch (error) {
-      console.error('Update document error:', error);
+      logger.error('Update document error:', error);
       return { data: { id: documentId, ...updates }, error: null };
     }
   },
@@ -253,7 +253,7 @@ export const documentService = {
       
       return { error };
     } catch (error) {
-      console.error('Delete document error:', error);
+      logger.error('Delete document error:', error);
       return { error: null };
     }
   }

@@ -40,7 +40,7 @@ export default function InlineVoiceControl({
     };
 
     const handleVoiceCommand = (command) => {
-      console.log('Voice command received:', command);
+      logger.debug('Voice command received:', command);
       if (onVoiceCommand) {
         onVoiceCommand(command);
       }

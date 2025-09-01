@@ -39,7 +39,7 @@ export default function AuthScreen() {
       
       // Google will handle the redirect
     } catch (error) {
-      console.error('Google sign in error:', error);
+      logger.error('Google sign in error:', error);
       setError('Failed to sign in with Google. Please try again.');
       setIsLoading(false);
     }
@@ -74,10 +74,10 @@ export default function AuthScreen() {
         if (error) throw error;
         
         // The SupabaseContext will handle the session
-        console.log('Sign in successful');
+        logger.debug('Sign in successful');
       }
     } catch (error) {
-      console.error('Auth error:', error);
+      logger.error('Auth error:', error);
       setError(error.message || 'An error occurred. Please try again.');
     } finally {
       setIsLoading(false);

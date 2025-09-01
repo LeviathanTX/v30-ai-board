@@ -2,11 +2,12 @@
 import { createClient } from '@supabase/supabase-js';
 import mammoth from 'mammoth';
 import * as pdfjsLib from 'pdfjs-dist';
-import * as XLSX from 'xlsx';
+import * as pdfjsWorker from 'pdfjs-dist/build/pdf.worker.mjs';
+import ExcelJS from 'exceljs';
 import aiService from './aiService';
 
-// Configure PDF.js
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+// Configure PDF.js worker for v5+
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
 class AdvancedDocumentIntelligence {
   constructor() {
@@ -169,7 +170,7 @@ class AdvancedDocumentIntelligence {
 
       return result;
     } catch (error) {
-      console.error('Deep document processing error:', error);
+      logger.error('Deep document processing error:', error);
       throw error;
     }
   }
@@ -232,7 +233,7 @@ class AdvancedDocumentIntelligence {
 
       return result;
     } catch (error) {
-      console.error('Advanced PDF processing error:', error);
+      logger.error('Advanced PDF processing error:', error);
       throw error;
     }
   }
@@ -241,7 +242,8 @@ class AdvancedDocumentIntelligence {
   async processXLSXDeep(file) {
     try {
       const arrayBuffer = await file.arrayBuffer();
-      const workbook = XLSX.read(arrayBuffer, { type: 'array', cellStyles: true, cellDates: true });
+      const workbook = new ExcelJS.Workbook();
+      await workbook.xlsx.load(arrayBuffer);
       
       const result = {
         text: '',
@@ -251,43 +253,47 @@ class AdvancedDocumentIntelligence {
         formulas: []
       };
 
-      workbook.SheetNames.forEach(sheetName => {
-        const sheet = workbook.Sheets[sheetName];
+      workbook.worksheets.forEach(worksheet => {
         const sheetData = {
-          name: sheetName,
-          data: XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' }),
-          range: sheet['!ref'],
+          name: worksheet.name,
+          data: [],
+          range: `A1:${worksheet.lastColumn?.letter || 'A'}${worksheet.rowCount || 1}`,
           tables: [],
           formulas: [],
           charts: []
         };
 
-        // Extract formulas
-        Object.keys(sheet).forEach(cellRef => {
-          if (cellRef.startsWith('!')) return;
-          const cell = sheet[cellRef];
-          if (cell.f) {
-            sheetData.formulas.push({
-              cell: cellRef,
-              formula: cell.f,
-              value: cell.v
-            });
-          }
+        // Convert worksheet to array format
+        worksheet.eachRow((row, rowNumber) => {
+          const rowData = [];
+          row.eachCell((cell, colNumber) => {
+            rowData[colNumber - 1] = cell.value || '';
+            
+            // Extract formulas if present
+            if (cell.formula) {
+              sheetData.formulas.push({
+                cell: `${cell.col}${cell.row}`,
+                formula: cell.formula,
+                value: cell.value
+              });
+            }
+          });
+          sheetData.data.push(rowData);
         });
 
         // Detect financial models
         const isFinancialModel = this.detectFinancialModel(sheetData);
         if (isFinancialModel) {
           result.financialModels.push({
-            sheet: sheetName,
+            sheet: worksheet.name,
             model: this.parseFinancialModel(sheetData)
           });
         }
 
-        // Convert to text for analysis
-        const csv = XLSX.utils.sheet_to_csv(sheet);
-        sheetData.text = csv;
-        result.text += `Sheet: ${sheetName}\n${csv}\n\n`;
+        // Convert to CSV-like text for analysis
+        const csvLines = sheetData.data.map(row => row.join(',')).join('\n');
+        sheetData.text = csvLines;
+        result.text += `Sheet: ${worksheet.name}\n${csvLines}\n\n`;
 
         result.sheets.push(sheetData);
         result.formulas.push(...sheetData.formulas);
@@ -295,7 +301,7 @@ class AdvancedDocumentIntelligence {
 
       return result;
     } catch (error) {
-      console.error('Advanced XLSX processing error:', error);
+      logger.error('Advanced XLSX processing error:', error);
       throw error;
     }
   }
@@ -361,7 +367,7 @@ class AdvancedDocumentIntelligence {
 
       return entities;
     } catch (error) {
-      console.error('Entity extraction error:', error);
+      logger.error('Entity extraction error:', error);
       return entities;
     }
   }
@@ -404,7 +410,7 @@ class AdvancedDocumentIntelligence {
 
       return financialData;
     } catch (error) {
-      console.error('Financial data extraction error:', error);
+      logger.error('Financial data extraction error:', error);
       return null;
     }
   }
@@ -482,7 +488,7 @@ class AdvancedDocumentIntelligence {
 
       return analysis;
     } catch (error) {
-      console.error('Due diligence analysis error:', error);
+      logger.error('Due diligence analysis error:', error);
       throw error;
     }
   }
@@ -534,7 +540,7 @@ class AdvancedDocumentIntelligence {
 
       return compliance;
     } catch (error) {
-      console.error('Compliance analysis error:', error);
+      logger.error('Compliance analysis error:', error);
       return null;
     }
   }
@@ -587,7 +593,7 @@ class AdvancedDocumentIntelligence {
       // Default classification
       return 'unknown';
     } catch (error) {
-      console.error('Document classification error:', error);
+      logger.error('Document classification error:', error);
       return 'unknown';
     }
   }
@@ -615,7 +621,7 @@ class AdvancedDocumentIntelligence {
         metadata: await this.extractDocumentMetadata(result.value)
       };
     } catch (error) {
-      console.error('Advanced DOCX processing error:', error);
+      logger.error('Advanced DOCX processing error:', error);
       throw error;
     }
   }
@@ -632,7 +638,7 @@ class AdvancedDocumentIntelligence {
         charts: []
       };
     } catch (error) {
-      console.error('PPTX processing error:', error);
+      logger.error('PPTX processing error:', error);
       throw error;
     }
   }
@@ -835,7 +841,7 @@ class AdvancedDocumentIntelligence {
           });
         }
       } catch (error) {
-        console.error('Metric calculation error:', error);
+        logger.error('Metric calculation error:', error);
       }
     }
 

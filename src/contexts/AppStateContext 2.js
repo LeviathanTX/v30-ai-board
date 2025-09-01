@@ -382,7 +382,7 @@ export function AppStateProvider({ children }) {
           dispatch({ type: actionTypes.UPDATE_SETTINGS, payload: JSON.parse(savedSettings) });
         }
       } catch (error) {
-        console.error('Error loading local data:', error);
+        logger.error('Error loading local data:', error);
       }
     };
 

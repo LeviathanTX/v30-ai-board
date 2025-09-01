@@ -60,7 +60,7 @@ export default function AvatarUpload({ advisorId, currentAvatar, currentEmoji, o
       // Update advisor
       onAvatarUpdate(publicUrl);
     } catch (error) {
-      console.error('Upload error:', error);
+      logger.error('Upload error:', error);
       setError('Failed to upload image. Using local preview.');
       // Fallback to data URL
       onAvatarUpdate(preview);

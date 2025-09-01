@@ -151,7 +151,7 @@ export default function EnhancedEditAdvisorModal({ isOpen, onClose, advisor, onU
         }]);
       }
     } catch (error) {
-      console.error('Upload error:', error);
+      logger.error('Upload error:', error);
       setUploadError(error.message);
     } finally {
       setIsUploading(false);
@@ -285,19 +285,19 @@ export default function EnhancedEditAdvisorModal({ isOpen, onClose, advisor, onU
           );
 
           if (kbError) {
-            console.error('Failed to update knowledge base:', kbError);
+            logger.error('Failed to update knowledge base:', kbError);
           } else {
-            console.log('Knowledge base updated:', knowledgeBase);
+            logger.debug('Knowledge base updated:', knowledgeBase);
           }
         } catch (error) {
-          console.error('Knowledge base update error:', error);
+          logger.error('Knowledge base update error:', error);
         }
       }
 
       onClose();
       
     } catch (error) {
-      console.error('Error updating advisor:', error);
+      logger.error('Error updating advisor:', error);
       alert('Failed to update advisor. Please try again.');
     } finally {
       setIsSaving(false);

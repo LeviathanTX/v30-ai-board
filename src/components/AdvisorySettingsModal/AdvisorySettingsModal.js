@@ -140,7 +140,7 @@ export default function AdvisorySettingsModal({ isOpen, onClose }) {
       
       alert('Advisors reset to defaults successfully!');
     } catch (error) {
-      console.error('Reset failed:', error);
+      logger.error('Reset failed:', error);
       alert('Failed to reset advisors. Please try again.');
     } finally {
       setIsLoading(false);

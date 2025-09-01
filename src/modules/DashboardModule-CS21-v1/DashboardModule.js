@@ -42,7 +42,7 @@ export default function DashboardModule() {
         const parsed = JSON.parse(savedConversations);
         setConversations(parsed || []);
       } catch (error) {
-        console.error('Error parsing saved conversations:', error);
+        logger.error('Error parsing saved conversations:', error);
         setConversations([]);
       }
     }

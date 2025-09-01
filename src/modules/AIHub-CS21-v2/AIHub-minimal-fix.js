@@ -125,7 +125,7 @@ Key Points: ${doc.extractedData.keywords?.map(k => k.word).join(', ') || 'None i
 
       setStreamingMessage('');
     } catch (error) {
-      console.error('Error sending message:', error);
+      logger.error('Error sending message:', error);
       dispatch({
         type: actions.ADD_NOTIFICATION,
         payload: {

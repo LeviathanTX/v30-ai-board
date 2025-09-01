@@ -144,7 +144,7 @@ export default function DocumentHub() {
         });
 
       } catch (error) {
-        console.error('Upload error:', error);
+        logger.error('Upload error:', error);
         dispatch({
           type: actions.ADD_NOTIFICATION,
           payload: { 

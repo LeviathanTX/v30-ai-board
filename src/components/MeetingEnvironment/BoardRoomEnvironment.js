@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Users, Crown, Star, Briefcase, Clock, FileText, 
-  Volume2, Mic, Settings, Eye, EyeOff 
+  Volume2, Mic, Settings, Eye, EyeOff, Maximize2, Minimize2
 } from 'lucide-react';
 
 export default function BoardRoomEnvironment({ 
@@ -15,6 +15,7 @@ export default function BoardRoomEnvironment({
   const [currentTime, setCurrentTime] = useState(new Date());
   const [meetingDuration, setMeetingDuration] = useState(0);
   const [showAtmosphere, setShowAtmosphere] = useState(true);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   // Update time every minute
   useEffect(() => {
@@ -24,6 +25,30 @@ export default function BoardRoomEnvironment({
     }, 60000);
     
     return () => clearInterval(interval);
+  }, []);
+
+  // Listen for fullscreen changes
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      const isCurrentlyFullscreen = !!(document.fullscreenElement ||
+        document.mozFullScreenElement ||
+        document.webkitFullscreenElement ||
+        document.msFullscreenElement);
+      
+      setIsFullscreen(isCurrentlyFullscreen);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('msfullscreenchange', handleFullscreenChange);
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('msfullscreenchange', handleFullscreenChange);
+    };
   }, []);
 
   const getAdvisorPosition = (index, total) => {
@@ -48,8 +73,64 @@ export default function BoardRoomEnvironment({
     return Briefcase;
   };
 
+  const handleFullscreenToggle = async () => {
+    try {
+      if (!isFullscreen) {
+        // Enter fullscreen
+        const element = document.documentElement;
+        
+        // Try different fullscreen methods for browser compatibility
+        if (element.requestFullscreen) {
+          await element.requestFullscreen();
+        } else if (element.mozRequestFullScreen) { // Firefox
+          await element.mozRequestFullScreen();
+        } else if (element.webkitRequestFullscreen) { // Chrome, Safari
+          await element.webkitRequestFullscreen();
+        } else if (element.msRequestFullscreen) { // IE/Edge
+          await element.msRequestFullscreen();
+        }
+        
+        setIsFullscreen(true);
+        
+        // Close any open sidebars when entering fullscreen
+        window.dispatchEvent(new CustomEvent('closeEnvironmentSidebar'));
+      } else {
+        // Exit fullscreen
+        if (document.exitFullscreen) {
+          await document.exitFullscreen();
+        } else if (document.mozCancelFullScreen) { // Firefox
+          await document.mozCancelFullScreen();
+        } else if (document.webkitExitFullscreen) { // Chrome, Safari
+          await document.webkitExitFullscreen();
+        } else if (document.msExitFullscreen) { // IE/Edge
+          await document.msExitFullscreen();
+        }
+        
+        setIsFullscreen(false);
+      }
+    } catch (error) {
+      logger.error('Fullscreen toggle error:', error);
+      // Fallback to CSS-only fullscreen
+      setIsFullscreen(!isFullscreen);
+      if (!isFullscreen) {
+        window.dispatchEvent(new CustomEvent('closeEnvironmentSidebar'));
+      }
+    }
+  };
+
   return (
-    <div className="relative w-full h-screen bg-gradient-to-b from-slate-800 via-slate-700 to-slate-900 overflow-hidden">
+    <div className={`relative w-full h-screen bg-gradient-to-b from-slate-800 via-slate-700 to-slate-900 overflow-hidden ${
+      isFullscreen ? 'fixed inset-0 z-[60]' : ''
+    }`}>
+      {/* Fullscreen Toggle */}
+      <button
+        onClick={handleFullscreenToggle}
+        className="absolute top-4 right-16 z-20 p-2 bg-black/20 text-white rounded-lg hover:bg-black/30 transition-colors"
+        title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+      >
+        {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+      </button>
+
       {/* Atmosphere Toggle */}
       <button
         onClick={() => setShowAtmosphere(!showAtmosphere)}

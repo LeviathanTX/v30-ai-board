@@ -17,9 +17,9 @@ export default function SyncButton() {
     setIsSyncing(true);
     try {
       const result = await syncNow();
-      console.log('Sync result:', result);
+      logger.debug('Sync result:', result);
     } catch (error) {
-      console.error('Sync error:', error);
+      logger.error('Sync error:', error);
     } finally {
       setIsSyncing(false);
     }

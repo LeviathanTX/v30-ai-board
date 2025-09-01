@@ -33,7 +33,7 @@ export default function CoreShell() {
           setActiveModule(settings.defaultPage);
         }
       } catch (error) {
-        console.error('Error loading default page setting:', error);
+        logger.error('Error loading default page setting:', error);
       }
     }
   }, []);

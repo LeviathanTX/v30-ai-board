@@ -1,11 +1,12 @@
 // src/services/documentProcessor.js
 import * as pdfjsLib from 'pdfjs-dist';
+import * as pdfjsWorker from 'pdfjs-dist/build/pdf.worker.mjs';
 import mammoth from 'mammoth';
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import aiService from './aiService';
 
-// Configure PDF.js worker
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+// Configure PDF.js worker for v5+
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
 class DocumentProcessor {
   constructor() {
@@ -43,7 +44,7 @@ class DocumentProcessor {
         ...analysis
       };
     } catch (error) {
-      console.error('Document processing error:', error);
+      logger.error('Document processing error:', error);
       throw error;
     }
   }
@@ -63,7 +64,7 @@ class DocumentProcessor {
 
       return fullText.trim();
     } catch (error) {
-      console.error('PDF processing error:', error);
+      logger.error('PDF processing error:', error);
       return `Error processing PDF: ${error.message}`;
     }
   }
@@ -78,7 +79,7 @@ class DocumentProcessor {
       const result = await mammoth.extractRawText({ arrayBuffer });
       return result.value;
     } catch (error) {
-      console.error('DOCX processing error:', error);
+      logger.error('DOCX processing error:', error);
       return `Error processing DOCX: ${error.message}`;
     }
   }
@@ -92,18 +93,24 @@ class DocumentProcessor {
   async processXLSX(file) {
     try {
       const arrayBuffer = await file.arrayBuffer();
-      const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+      const workbook = new ExcelJS.Workbook();
+      await workbook.xlsx.load(arrayBuffer);
       let fullText = '';
 
-      workbook.SheetNames.forEach(sheetName => {
-        const sheet = workbook.Sheets[sheetName];
-        const csv = XLSX.utils.sheet_to_csv(sheet);
-        fullText += `Sheet: ${sheetName}\n${csv}\n\n`;
+      workbook.worksheets.forEach(worksheet => {
+        fullText += `Sheet: ${worksheet.name}\n`;
+        worksheet.eachRow((row, rowNumber) => {
+          const values = row.values;
+          if (values && values.length > 1) {
+            fullText += values.slice(1).join(',') + '\n'; // Skip index 0 (Excel.js includes empty first element)
+          }
+        });
+        fullText += '\n';
       });
 
       return fullText.trim();
     } catch (error) {
-      console.error('XLSX processing error:', error);
+      logger.error('XLSX processing error:', error);
       return `Error processing XLSX: ${error.message}`;
     }
   }
@@ -190,7 +197,7 @@ Respond in JSON format:
           };
         }
       } catch (parseError) {
-        console.error('Failed to parse AI response as JSON:', parseError);
+        logger.error('Failed to parse AI response as JSON:', parseError);
       }
 
       // Fallback: Create a basic analysis from the response
@@ -206,7 +213,7 @@ Respond in JSON format:
       };
 
     } catch (error) {
-      console.error('AI analysis error:', error);
+      logger.error('AI analysis error:', error);
       
       // Fallback to basic analysis
       return {
@@ -267,7 +274,7 @@ Respond in JSON format:
       
       return textContent || `PowerPoint presentation: ${file.name}\n\nThis PowerPoint file has been uploaded successfully. The presentation contains ${Math.round(file.size / 1024)}KB of content including slides, text, and media elements.`;
     } catch (error) {
-      console.error('PPTX processing error:', error);
+      logger.error('PPTX processing error:', error);
       return `PowerPoint presentation: ${file.name}\n\nThis is a PowerPoint presentation file (${Math.round(file.size / 1024)}KB). Text extraction is being processed...`;
     }
   }
@@ -278,7 +285,7 @@ Respond in JSON format:
       // For now, return basic file information
       return `PowerPoint presentation: ${file.name}\n\nThis is a legacy PowerPoint presentation file (${Math.round(file.size / 1024)}KB). The file has been uploaded successfully and is available for analysis.`;
     } catch (error) {
-      console.error('PPT processing error:', error);
+      logger.error('PPT processing error:', error);
       return `PowerPoint presentation: ${file.name}\n\nThis PowerPoint file has been uploaded (${Math.round(file.size / 1024)}KB).`;
     }
   }
@@ -323,7 +330,7 @@ Respond in JSON format:
       
       return text.length > 20 ? text : null;
     } catch (error) {
-      console.error('PPTX text extraction error:', error);
+      logger.error('PPTX text extraction error:', error);
       return null;
     }
   }

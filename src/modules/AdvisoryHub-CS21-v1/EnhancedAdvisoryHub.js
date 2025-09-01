@@ -26,7 +26,7 @@ export default function EnhancedAdvisoryHub() {
         // Save to database if user is logged in
         const { data, error } = await advisorService.createAdvisor(state.user.id, advisorData);
         if (error) {
-          console.error('Error creating advisor:', error);
+          logger.error('Error creating advisor:', error);
           return;
         }
         dispatch({ type: actions.ADD_ADVISOR, payload: data });
@@ -40,7 +40,7 @@ export default function EnhancedAdvisoryHub() {
         dispatch({ type: actions.ADD_ADVISOR, payload: newAdvisor });
       }
     } catch (error) {
-      console.error('Error creating advisor:', error);
+      logger.error('Error creating advisor:', error);
     }
   };
 
@@ -50,7 +50,7 @@ export default function EnhancedAdvisoryHub() {
         // Update in database if user is logged in (all advisors now editable)
         const { error } = await advisorService.updateAdvisor(advisorData.id, advisorData);
         if (error) {
-          console.error('Error updating advisor:', error);
+          logger.error('Error updating advisor:', error);
           return;
         }
       }
@@ -58,7 +58,7 @@ export default function EnhancedAdvisoryHub() {
       // Always update local state
       dispatch({ type: actions.UPDATE_ADVISOR, payload: advisorData });
     } catch (error) {
-      console.error('Error updating advisor:', error);
+      logger.error('Error updating advisor:', error);
     }
   };
 
@@ -70,14 +70,14 @@ export default function EnhancedAdvisoryHub() {
         // Delete from database if user is logged in (all advisors can be deleted)
         const { error } = await advisorService.deleteAdvisor(advisorId);
         if (error) {
-          console.error('Error deleting advisor:', error);
+          logger.error('Error deleting advisor:', error);
           return;
         }
       }
       
       dispatch({ type: actions.DELETE_ADVISOR, payload: advisorId });
     } catch (error) {
-      console.error('Error deleting advisor:', error);
+      logger.error('Error deleting advisor:', error);
     }
   };
 
@@ -116,7 +116,7 @@ export default function EnhancedAdvisoryHub() {
   };
 
   const handleVoiceCommand = (command) => {
-    console.log('Voice command received in Advisory Hub:', command);
+    logger.debug('Voice command received in Advisory Hub:', command);
     
     switch (command.action) {
       case 'CREATE_ADVISOR':
@@ -143,7 +143,7 @@ export default function EnhancedAdvisoryHub() {
         break;
         
       default:
-        console.log('Unhandled voice command in hub:', command);
+        logger.debug('Unhandled voice command in hub:', command);
     }
   };
 

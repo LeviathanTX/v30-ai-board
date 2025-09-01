@@ -45,7 +45,7 @@ class AIService {
         return data.content[0].text;
       }
     } catch (error) {
-      console.error('AI Service Error:', error);
+      logger.error('AI Service Error:', error);
       throw error;
     }
   }
@@ -80,7 +80,7 @@ class AIService {
         // Small delay between advisors for better UX
         await new Promise(resolve => setTimeout(resolve, 500));
       } catch (error) {
-        console.error(`Error getting response from ${advisor.name}:`, error);
+        logger.error(`Error getting response from ${advisor.name}:`, error);
       }
     }
 
@@ -111,7 +111,7 @@ class AIService {
 
             await new Promise(resolve => setTimeout(resolve, 500));
           } catch (error) {
-            console.error(`Error in round ${round} from ${advisor.name}:`, error);
+            logger.error(`Error in round ${round} from ${advisor.name}:`, error);
           }
         }
       }

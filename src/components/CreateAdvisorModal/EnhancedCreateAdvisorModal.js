@@ -111,7 +111,7 @@ export default function EnhancedCreateAdvisorModal({ isOpen, onClose, onCreateAd
         }]);
       }
     } catch (error) {
-      console.error('Upload error:', error);
+      logger.error('Upload error:', error);
       setUploadError(error.message);
     } finally {
       setIsUploading(false);
@@ -159,16 +159,16 @@ export default function EnhancedCreateAdvisorModal({ isOpen, onClose, onCreateAd
           );
 
           if (kbError) {
-            console.error('Failed to create knowledge base:', kbError);
+            logger.error('Failed to create knowledge base:', kbError);
           } else {
-            console.log('Knowledge base created:', knowledgeBase);
+            logger.debug('Knowledge base created:', knowledgeBase);
             // Here you could add each document to the knowledge base
             // for (const doc of uploadedDocuments) {
             //   await knowledgeBaseService.addDocumentToKnowledgeBase(knowledgeBase.id, doc.id, doc);
             // }
           }
         } catch (error) {
-          console.error('Knowledge base creation error:', error);
+          logger.error('Knowledge base creation error:', error);
         }
       }
 
@@ -176,7 +176,7 @@ export default function EnhancedCreateAdvisorModal({ isOpen, onClose, onCreateAd
       resetForm();
       
     } catch (error) {
-      console.error('Error creating advisor:', error);
+      logger.error('Error creating advisor:', error);
       alert('Failed to create advisor. Please try again.');
     }
   };

@@ -196,7 +196,7 @@ How would you like to start?`,
         dispatch({ type: 'ADD_MESSAGE', payload: aiMessage });
       }
     } catch (error) {
-      console.error('Error sending message:', error);
+      logger.error('Error sending message:', error);
       dispatch({
         type: 'ADD_NOTIFICATION',
         payload: {

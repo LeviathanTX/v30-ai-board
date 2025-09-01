@@ -142,7 +142,7 @@ class OpenAIRealtimeService extends EventEmitter {
       this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
       await this.audioContext.resume();
     } catch (error) {
-      console.error('Failed to initialize audio context:', error);
+      logger.error('Failed to initialize audio context:', error);
       throw new Error('Audio context initialization failed');
     }
   }
@@ -155,7 +155,7 @@ class OpenAIRealtimeService extends EventEmitter {
 
     try {
       // Get ephemeral token from our server endpoint
-      console.log('Getting ephemeral token...');
+      logger.debug('Getting ephemeral token...');
       const tokenResponse = await fetch('/api/realtime-token', {
         method: 'POST',
         headers: {
@@ -172,7 +172,7 @@ class OpenAIRealtimeService extends EventEmitter {
       }
 
       const tokenData = await tokenResponse.json();
-      console.log('Got ephemeral token:', tokenData);
+      logger.debug('Got ephemeral token:', tokenData);
 
       if (!tokenData.client_secret) {
         throw new Error('No client_secret received from token endpoint');
@@ -185,7 +185,7 @@ class OpenAIRealtimeService extends EventEmitter {
       this.ephemeralToken = tokenData.client_secret.value;
 
       this.ws.onopen = () => {
-        console.log('OpenAI Realtime connected');
+        logger.debug('OpenAI Realtime connected');
         this.isConnected = true;
         this.emit('connected');
         
@@ -220,18 +220,18 @@ class OpenAIRealtimeService extends EventEmitter {
       };
 
       this.ws.onclose = () => {
-        console.log('OpenAI Realtime disconnected');
+        logger.debug('OpenAI Realtime disconnected');
         this.isConnected = false;
         this.emit('disconnected');
       };
 
       this.ws.onerror = (error) => {
-        console.error('OpenAI Realtime error:', error);
+        logger.error('OpenAI Realtime error:', error);
         this.emit('error', error);
       };
 
     } catch (error) {
-      console.error('Failed to connect to OpenAI Realtime:', error);
+      logger.error('Failed to connect to OpenAI Realtime:', error);
       throw error;
     }
   }
@@ -249,7 +249,7 @@ class OpenAIRealtimeService extends EventEmitter {
   handleMessage(message) {
     switch (message.type) {
       case 'session.created':
-        console.log('Session created:', message.session);
+        logger.debug('Session created:', message.session);
         this.emit('sessionCreated', message.session);
         break;
 
@@ -263,7 +263,7 @@ class OpenAIRealtimeService extends EventEmitter {
 
       case 'conversation.item.input_audio_transcription.completed':
         const transcript = message.transcript;
-        console.log('Transcript:', transcript);
+        logger.debug('Transcript:', transcript);
         this.emit('transcript', transcript);
         this.processVoiceCommand(transcript);
         break;
@@ -284,12 +284,12 @@ class OpenAIRealtimeService extends EventEmitter {
         break;
 
       case 'error':
-        console.error('OpenAI Realtime API error:', message.error);
+        logger.error('OpenAI Realtime API error:', message.error);
         this.emit('error', message.error);
         break;
 
       default:
-        console.log('Unhandled message type:', message.type, message);
+        logger.debug('Unhandled message type:', message.type, message);
     }
   }
 
@@ -297,7 +297,7 @@ class OpenAIRealtimeService extends EventEmitter {
   processVoiceCommand(transcript) {
     const command = this.parseVoiceCommand(transcript);
     if (command) {
-      console.log('Voice command detected:', command);
+      logger.debug('Voice command detected:', command);
       this.emit('voiceCommand', command);
     }
   }
@@ -373,7 +373,7 @@ class OpenAIRealtimeService extends EventEmitter {
       this.emit('recordingStarted');
       
     } catch (error) {
-      console.error('Failed to start recording:', error);
+      logger.error('Failed to start recording:', error);
       throw error;
     }
   }

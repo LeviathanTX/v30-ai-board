@@ -66,7 +66,7 @@ export default function AIHubEnhanced() {
         payload: data
       });
     } catch (error) {
-      console.error('Error creating conversation:', error);
+      logger.error('Error creating conversation:', error);
       dispatch({
         type: actions.ADD_NOTIFICATION,
         payload: {
@@ -213,7 +213,7 @@ export default function AIHubEnhanced() {
       }
 
     } catch (error) {
-      console.error('Error sending message:', error);
+      logger.error('Error sending message:', error);
       dispatch({
         type: actions.ADD_NOTIFICATION,
         payload: {
@@ -316,7 +316,7 @@ Provide advice and insights based on your role and expertise. Stay in character.
         }
 
       } catch (error) {
-        console.error(`Error getting response from ${advisor.name}:`, error);
+        logger.error(`Error getting response from ${advisor.name}:`, error);
       }
     }
   };
@@ -389,7 +389,7 @@ Provide advice and insights based on your role and expertise. Stay in character.
       }
 
     } catch (error) {
-      console.error('Error generating summary:', error);
+      logger.error('Error generating summary:', error);
       dispatch({
         type: actions.ADD_NOTIFICATION,
         payload: {

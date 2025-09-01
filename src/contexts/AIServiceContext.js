@@ -42,7 +42,7 @@ export function AIServiceProvider({ children }) {
         }
       }
     } catch (error) {
-      console.error('Failed to load API configurations:', error);
+      logger.error('Failed to load API configurations:', error);
       setErrors(prev => ({ ...prev, load: 'Failed to load API configurations' }));
     } finally {
       setLoading(false);
@@ -66,7 +66,7 @@ export function AIServiceProvider({ children }) {
       setApiConfigs(configs);
       return { success: true };
     } catch (error) {
-      console.error('Failed to save API configurations:', error);
+      logger.error('Failed to save API configurations:', error);
       return { success: false, error: 'Failed to save configurations' };
     }
   };

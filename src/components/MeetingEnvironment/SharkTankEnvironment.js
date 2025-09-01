@@ -2,7 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Timer, Play, Pause, RotateCcw, Waves, DollarSign, TrendingUp,
-  Eye, EyeOff, Volume2, Mic, Target, AlertTriangle, Star, Crown
+  Eye, EyeOff, Volume2, Mic, Target, AlertTriangle, Star, Crown,
+  Maximize2, Minimize2
 } from 'lucide-react';
 import { SharkTankTimer } from './MeetingEnvironmentSelector';
 
@@ -19,6 +20,7 @@ export default function SharkTankEnvironment({
   const [stageSpotlight, setStageSpotlight] = useState(true);
   const [pitchStarted, setPitchStarted] = useState(false);
   const [nervousLevel, setNervousLevel] = useState(0);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   // Filter for investor advisors (celebrities and business leaders)
   const sharks = selectedAdvisors.filter(advisor => 
@@ -97,6 +99,51 @@ export default function SharkTankEnvironment({
     // Could trigger a "time's up" message from sharks
   };
 
+  const handleFullscreenToggle = async () => {
+    try {
+      if (!isFullscreen) {
+        // Enter fullscreen
+        const element = document.documentElement;
+        
+        // Try different fullscreen methods for browser compatibility
+        if (element.requestFullscreen) {
+          await element.requestFullscreen();
+        } else if (element.mozRequestFullScreen) { // Firefox
+          await element.mozRequestFullScreen();
+        } else if (element.webkitRequestFullscreen) { // Chrome, Safari
+          await element.webkitRequestFullscreen();
+        } else if (element.msRequestFullscreen) { // IE/Edge
+          await element.msRequestFullscreen();
+        }
+        
+        setIsFullscreen(true);
+        
+        // Close any open sidebars when entering fullscreen
+        window.dispatchEvent(new CustomEvent('closeEnvironmentSidebar'));
+      } else {
+        // Exit fullscreen
+        if (document.exitFullscreen) {
+          await document.exitFullscreen();
+        } else if (document.mozCancelFullScreen) { // Firefox
+          await document.mozCancelFullScreen();
+        } else if (document.webkitExitFullscreen) { // Chrome, Safari
+          await document.webkitExitFullscreen();
+        } else if (document.msExitFullscreen) { // IE/Edge
+          await document.msExitFullscreen();
+        }
+        
+        setIsFullscreen(false);
+      }
+    } catch (error) {
+      logger.error('Fullscreen toggle error:', error);
+      // Fallback to CSS-only fullscreen
+      setIsFullscreen(!isFullscreen);
+      if (!isFullscreen) {
+        window.dispatchEvent(new CustomEvent('closeEnvironmentSidebar'));
+      }
+    }
+  };
+
   // Increase tension as time runs out
   useEffect(() => {
     if (timerActive) {
@@ -108,8 +155,43 @@ export default function SharkTankEnvironment({
     }
   }, [timerActive]);
 
+  // Listen for fullscreen changes
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      const isCurrentlyFullscreen = !!(document.fullscreenElement ||
+        document.mozFullScreenElement ||
+        document.webkitFullscreenElement ||
+        document.msFullscreenElement);
+      
+      setIsFullscreen(isCurrentlyFullscreen);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('msfullscreenchange', handleFullscreenChange);
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('msfullscreenchange', handleFullscreenChange);
+    };
+  }, []);
+
   return (
-    <div className="relative w-full h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-black overflow-hidden">
+    <div className={`relative w-full h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-black overflow-hidden ${
+      isFullscreen ? 'fixed inset-0 z-[60]' : ''
+    }`}>
+      {/* Fullscreen Toggle */}
+      <button
+        onClick={handleFullscreenToggle}
+        className="absolute top-4 right-28 z-20 p-2 bg-black/30 text-white rounded-lg hover:bg-black/40 transition-colors"
+        title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+      >
+        {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+      </button>
+
       {/* Atmosphere Toggle */}
       <button
         onClick={() => setShowAtmosphere(!showAtmosphere)}

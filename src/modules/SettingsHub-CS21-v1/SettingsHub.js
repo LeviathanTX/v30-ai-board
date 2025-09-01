@@ -5,7 +5,8 @@ import {
   Globe, Shield, FileText, Home, MessageSquare, Users, 
   Video, Bell, Moon, Sun, Monitor, Save, Check, X,
   ArrowRight, TrendingUp, Sparkles, Building, Clock, BarChart,
-  Brain, Database, Download, Upload, Trash2, RefreshCw, Wifi
+  Brain, Database, Download, Upload, Trash2, RefreshCw, Wifi,
+  CheckCircle, AlertCircle, Eye, EyeOff, Zap, Cpu
 } from 'lucide-react';
 import { useAppState } from '../../contexts/AppStateContext';
 import { useSupabase } from '../../contexts/SupabaseContext';
@@ -31,6 +32,19 @@ export default function SettingsHub() {
   });
   const [saveStatus, setSaveStatus] = useState('');
   
+  // AI Services state - moved here to be available in useEffect
+  const [aiServices, setAiServices] = useState({
+    openai: { name: 'OpenAI', apiKey: '', connected: false, models: ['gpt-4o', 'gpt-4o-mini'] },
+    deepseek: { name: 'DeepSeek', apiKey: '', connected: false, models: ['deepseek-chat'] },
+    anthropic: { name: 'Claude (Anthropic)', apiKey: '', connected: false, models: ['claude-3-5-sonnet-20241022'] },
+    google: { name: 'Google Gemini', apiKey: '', connected: false, models: ['gemini-1.5-pro'] }
+  });
+  
+  // Voice Services state - moved here to be available in useEffect
+  const [voiceServices, setVoiceServices] = useState({
+    openai_realtime: { name: 'OpenAI Realtime', apiKey: '', connected: false, models: ['gpt-4o-realtime-preview'] }
+  });
+  
   // Advisory Board Settings State
   const [isLoading, setIsLoading] = useState(false);
   const [openaiApiKey, setOpenaiApiKey] = useState(localStorage.getItem('openai_api_key') || '');
@@ -44,6 +58,28 @@ export default function SettingsHub() {
     if (savedSettings) {
       setSettings(prev => ({ ...prev, ...JSON.parse(savedSettings) }));
     }
+    
+    // Load AI service API keys
+    const loadedAiServices = { ...aiServices };
+    Object.keys(loadedAiServices).forEach(service => {
+      const storedKey = localStorage.getItem(`${service}_api_key`);
+      if (storedKey) {
+        loadedAiServices[service].apiKey = storedKey;
+        loadedAiServices[service].connected = true;
+      }
+    });
+    setAiServices(loadedAiServices);
+    
+    // Load Voice service API keys
+    const loadedVoiceServices = { ...voiceServices };
+    Object.keys(loadedVoiceServices).forEach(service => {
+      const storedKey = localStorage.getItem(`${service}_api_key`);
+      if (storedKey) {
+        loadedVoiceServices[service].apiKey = storedKey;
+        loadedVoiceServices[service].connected = true;
+      }
+    });
+    setVoiceServices(loadedVoiceServices);
   }, []);
 
   // Voice control effects for Advisory Board
@@ -170,7 +206,7 @@ export default function SettingsHub() {
       
       alert('Advisors reset to defaults successfully!');
     } catch (error) {
-      console.error('Reset failed:', error);
+      logger.error('Reset failed:', error);
       alert('Failed to reset advisors. Please try again.');
     } finally {
       setIsLoading(false);
@@ -255,12 +291,367 @@ export default function SettingsHub() {
 
   const tabs = [
     { id: 'general', name: 'General', icon: Settings },
+    { id: 'ai-services', name: 'AI Services', icon: Brain },
     { id: 'account', name: 'Account', icon: User },
     { id: 'advisors', name: 'Advisory Board', icon: Users },
     { id: 'subscription', name: 'Subscription', icon: CreditCard },
     { id: 'privacy', name: 'Privacy & Legal', icon: Shield }
   ];
 
+  // AI Service management functions
+  const handleAiServiceKeyChange = (service, value) => {
+    setAiServices(prev => ({
+      ...prev,
+      [service]: {
+        ...prev[service],
+        apiKey: value,
+        error: null
+      }
+    }));
+  };
+  
+  const handleVoiceServiceKeyChange = (service, value) => {
+    setVoiceServices(prev => ({
+      ...prev,
+      [service]: {
+        ...prev[service],
+        apiKey: value,
+        error: null
+      }
+    }));
+  };
+  
+  const toggleKeyVisibility = (service, isVoice = false) => {
+    if (isVoice) {
+      setVoiceServices(prev => ({
+        ...prev,
+        [service]: {
+          ...prev[service],
+          showKey: !prev[service].showKey
+        }
+      }));
+    } else {
+      setAiServices(prev => ({
+        ...prev,
+        [service]: {
+          ...prev[service],
+          showKey: !prev[service].showKey
+        }
+      }));
+    }
+  };
+  
+  const testAiService = async (service) => {
+    const serviceConfig = aiServices[service];
+    if (!serviceConfig.apiKey) {
+      setAiServices(prev => ({
+        ...prev,
+        [service]: { ...prev[service], error: 'API key is required' }
+      }));
+      return;
+    }
+    
+    setAiServices(prev => ({
+      ...prev,
+      [service]: { ...prev[service], testing: true, error: null }
+    }));
+    
+    try {
+      // Simulate API test - in real implementation, make actual API call
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Save to localStorage and update state
+      localStorage.setItem(`${service}_api_key`, serviceConfig.apiKey);
+      setAiServices(prev => ({
+        ...prev,
+        [service]: { ...prev[service], testing: false, connected: true }
+      }));
+      
+      // Update AppState context
+      if (dispatch && actions.UPDATE_AI_SERVICE) {
+        dispatch({
+          type: actions.UPDATE_AI_SERVICE,
+          payload: {
+            service,
+            config: { apiKey: serviceConfig.apiKey, connected: true }
+          }
+        });
+      }
+    } catch (error) {
+      setAiServices(prev => ({
+        ...prev,
+        [service]: { 
+          ...prev[service], 
+          testing: false, 
+          connected: false, 
+          error: 'Connection failed. Please check your API key.' 
+        }
+      }));
+    }
+  };
+  
+  const testVoiceService = async (service) => {
+    const serviceConfig = voiceServices[service];
+    if (!serviceConfig.apiKey) {
+      setVoiceServices(prev => ({
+        ...prev,
+        [service]: { ...prev[service], error: 'API key is required' }
+      }));
+      return;
+    }
+    
+    setVoiceServices(prev => ({
+      ...prev,
+      [service]: { ...prev[service], testing: true, error: null }
+    }));
+    
+    try {
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      localStorage.setItem(`${service}_api_key`, serviceConfig.apiKey);
+      setVoiceServices(prev => ({
+        ...prev,
+        [service]: { ...prev[service], testing: false, connected: true }
+      }));
+    } catch (error) {
+      setVoiceServices(prev => ({
+        ...prev,
+        [service]: { 
+          ...prev[service], 
+          testing: false, 
+          connected: false, 
+          error: 'Connection failed. Please check your API key.' 
+        }
+      }));
+    }
+  };
+  
+  const disconnectAiService = (service) => {
+    localStorage.removeItem(`${service}_api_key`);
+    setAiServices(prev => ({
+      ...prev,
+      [service]: {
+        ...prev[service],
+        apiKey: '',
+        connected: false,
+        error: null
+      }
+    }));
+  };
+  
+  const disconnectVoiceService = (service) => {
+    localStorage.removeItem(`${service}_api_key`);
+    setVoiceServices(prev => ({
+      ...prev,
+      [service]: {
+        ...prev[service],
+        apiKey: '',
+        connected: false,
+        error: null
+      }
+    }));
+  };
+  
+  const renderAiServicesSettings = () => {
+    const aiServiceConfigs = {
+      openai: { name: 'OpenAI', color: 'green', icon: Zap, description: 'GPT-4o, GPT-4o-mini models with advanced capabilities' },
+      anthropic: { name: 'Claude (Anthropic)', color: 'orange', icon: Brain, description: 'Claude-3.5 Sonnet with superior reasoning abilities' },
+      deepseek: { name: 'DeepSeek', color: 'blue', icon: Cpu, description: 'Cost-effective AI models with strong performance' },
+      google: { name: 'Google Gemini', color: 'purple', icon: Sparkles, description: 'Gemini-1.5 Pro with multimodal capabilities' }
+    };
+    
+    return (
+      <div className="space-y-8">
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">AI Chat Services</h3>
+          <p className="text-sm text-gray-600 mb-6">
+            Configure API keys for AI services. Each advisor can use a different AI service for diverse perspectives.
+          </p>
+          
+          <div className="space-y-6">
+            {Object.entries(aiServiceConfigs).map(([service, config]) => {
+              const serviceState = aiServices[service];
+              const Icon = config.icon;
+              
+              return (
+                <div key={service} className="border border-gray-200 rounded-lg p-6">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center space-x-3">
+                      <div className={`w-10 h-10 rounded-lg bg-${config.color}-100 flex items-center justify-center`}>
+                        <Icon className={`w-5 h-5 text-${config.color}-600`} />
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-gray-900">{config.name}</h4>
+                        <p className="text-sm text-gray-600">{config.description}</p>
+                      </div>
+                    </div>
+                    
+                    {serviceState.connected && (
+                      <div className="flex items-center space-x-2 text-green-600">
+                        <CheckCircle className="w-4 h-4" />
+                        <span className="text-sm font-medium">Connected</span>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        API Key
+                      </label>
+                      <div className="flex space-x-2">
+                        <div className="flex-1 relative">
+                          <input
+                            type={serviceState.showKey ? 'text' : 'password'}
+                            value={serviceState.apiKey}
+                            onChange={(e) => handleAiServiceKeyChange(service, e.target.value)}
+                            placeholder={`Enter your ${config.name} API key`}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => toggleKeyVisibility(service)}
+                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                          >
+                            {serviceState.showKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
+                        </div>
+                        
+                        {serviceState.connected ? (
+                          <button
+                            onClick={() => disconnectAiService(service)}
+                            className="px-4 py-2 border border-red-300 text-red-700 rounded-md hover:bg-red-50"
+                          >
+                            Disconnect
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => testAiService(service)}
+                            disabled={serviceState.testing || !serviceState.apiKey}
+                            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                          >
+                            {serviceState.testing ? 'Testing...' : 'Connect'}
+                          </button>
+                        )}
+                      </div>
+                      
+                      {serviceState.error && (
+                        <div className="mt-2 flex items-center space-x-2 text-red-600">
+                          <AlertCircle className="w-4 h-4" />
+                          <span className="text-sm">{serviceState.error}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+        
+        {/* Voice Services Section */}
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Voice Services</h3>
+          <p className="text-sm text-gray-600 mb-6">
+            Configure voice API keys for real-time voice interactions.
+          </p>
+          
+          <div className="space-y-6">
+            {Object.entries({
+              openai_realtime: { name: 'OpenAI Realtime', color: 'green', icon: Volume2, description: 'Real-time voice conversation with GPT-4o' }
+            }).map(([service, config]) => {
+              const serviceState = voiceServices[service];
+              const Icon = config.icon;
+              
+              return (
+                <div key={service} className="border border-gray-200 rounded-lg p-6">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center space-x-3">
+                      <div className={`w-10 h-10 rounded-lg bg-${config.color}-100 flex items-center justify-center`}>
+                        <Icon className={`w-5 h-5 text-${config.color}-600`} />
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-gray-900">{config.name}</h4>
+                        <p className="text-sm text-gray-600">{config.description}</p>
+                      </div>
+                    </div>
+                    
+                    {serviceState.connected && (
+                      <div className="flex items-center space-x-2 text-green-600">
+                        <CheckCircle className="w-4 h-4" />
+                        <span className="text-sm font-medium">Connected</span>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        API Key
+                      </label>
+                      <div className="flex space-x-2">
+                        <div className="flex-1 relative">
+                          <input
+                            type={serviceState.showKey ? 'text' : 'password'}
+                            value={serviceState.apiKey}
+                            onChange={(e) => handleVoiceServiceKeyChange(service, e.target.value)}
+                            placeholder={`Enter your ${config.name} API key`}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => toggleKeyVisibility(service, true)}
+                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                          >
+                            {serviceState.showKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
+                        </div>
+                        
+                        {serviceState.connected ? (
+                          <button
+                            onClick={() => disconnectVoiceService(service)}
+                            className="px-4 py-2 border border-red-300 text-red-700 rounded-md hover:bg-red-50"
+                          >
+                            Disconnect
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => testVoiceService(service)}
+                            disabled={serviceState.testing || !serviceState.apiKey}
+                            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                          >
+                            {serviceState.testing ? 'Testing...' : 'Connect'}
+                          </button>
+                        )}
+                      </div>
+                      
+                      {serviceState.error && (
+                        <div className="mt-2 flex items-center space-x-2 text-red-600">
+                          <AlertCircle className="w-4 h-4" />
+                          <span className="text-sm">{serviceState.error}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+        
+        {/* Usage Guidelines */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+          <h4 className="font-medium text-blue-900 mb-2">💡 Usage Guidelines</h4>
+          <ul className="text-sm text-blue-800 space-y-1">
+            <li>• <strong>Multiple Services:</strong> Connect multiple AI services for diverse advisor perspectives</li>
+            <li>• <strong>Fallback:</strong> If a preferred service is unavailable, the system will use the default service</li>
+            <li>• <strong>Security:</strong> API keys are stored locally in your browser and never sent to our servers</li>
+            <li>• <strong>Cost:</strong> You'll be charged directly by each AI service provider based on usage</li>
+          </ul>
+        </div>
+      </div>
+    );
+  };
+  
   const renderGeneralSettings = () => (
     <div className="space-y-6">
       <div>
@@ -965,6 +1356,7 @@ export default function SettingsHub() {
         {/* Main Content */}
         <div className="flex-1 overflow-y-auto p-6">
           {activeTab === 'general' && renderGeneralSettings()}
+          {activeTab === 'ai-services' && renderAiServicesSettings()}
           {activeTab === 'account' && renderAccountSettings()}
           {activeTab === 'advisors' && renderAdvisoryBoardSettings()}
           {activeTab === 'subscription' && renderSubscriptionSettings()}

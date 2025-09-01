@@ -46,7 +46,7 @@ export default function VoiceAdvisorManager({
     };
 
     const handleVoiceCommand = (command) => {
-      console.log('Voice command received:', command);
+      logger.debug('Voice command received:', command);
       
       if (onVoiceCommand) {
         onVoiceCommand(command);
@@ -229,7 +229,7 @@ export default function VoiceAdvisorManager({
         break;
 
       default:
-        console.log('Unhandled voice command:', command);
+        logger.debug('Unhandled voice command:', command);
     }
   };
 
@@ -278,7 +278,7 @@ export default function VoiceAdvisorManager({
         audioRef.current.play().then(() => {
           setIsSpeaking(true);
         }).catch(err => {
-          console.error('Failed to play audio:', err);
+          logger.error('Failed to play audio:', err);
         });
       }
       
@@ -286,7 +286,7 @@ export default function VoiceAdvisorManager({
       audioChunks.current = [];
       
     } catch (error) {
-      console.error('Failed to play audio response:', error);
+      logger.error('Failed to play audio response:', error);
     }
   };
 

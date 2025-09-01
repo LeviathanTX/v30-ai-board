@@ -78,7 +78,7 @@ export default function AIHub() {
       dispatch({ type: 'ADD_MESSAGE', payload: aiMessage });
       setStreamingMessage('');
     } catch (error) {
-      console.error('Error sending message:', error);
+      logger.error('Error sending message:', error);
     } finally {
       setIsLoading(false);
     }

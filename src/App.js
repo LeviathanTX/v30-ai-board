@@ -75,7 +75,7 @@ function AppContent() {
   // Initialize persistence when user logs in
   useEffect(() => {
     if (user && FEATURES.CLOUD_PERSISTENCE) {
-      console.log('🔄 Initializing cloud persistence for user:', user.email);
+      logger.debug('🔄 Initializing cloud persistence for user:', user.email);
     }
   }, [user]);
 

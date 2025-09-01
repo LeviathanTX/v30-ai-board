@@ -110,12 +110,12 @@ export default function AdvancedDocumentHub() {
           
           setProcessing(prev => ({ ...prev, [docId]: 'completed' }));
         } catch (analysisError) {
-          console.error('Advanced analysis error:', analysisError);
+          logger.error('Advanced analysis error:', analysisError);
           setProcessing(prev => ({ ...prev, [docId]: 'analysis_failed' }));
         }
 
       } catch (error) {
-        console.error('Document upload error:', error);
+        logger.error('Document upload error:', error);
         setProcessing(prev => ({ ...prev, [docId]: 'error' }));
       }
     }
@@ -148,7 +148,7 @@ export default function AdvancedDocumentHub() {
         setCrossReferences(refs);
       }
     } catch (error) {
-      console.error('Cross-reference error:', error);
+      logger.error('Cross-reference error:', error);
     }
   };
 
@@ -191,7 +191,7 @@ export default function AdvancedDocumentHub() {
       });
 
     } catch (error) {
-      console.error('Due diligence error:', error);
+      logger.error('Due diligence error:', error);
     }
   };
 

@@ -217,7 +217,7 @@ export default function AIHub() {
         dispatch({ type: actions.ADD_MESSAGE, payload: uploadMessage });
 
       } catch (error) {
-        console.error('Upload error:', error);
+        logger.error('Upload error:', error);
         dispatch({
           type: actions.ADD_NOTIFICATION,
           payload: { 
@@ -431,7 +431,7 @@ The meeting summary and action items will be available in your meeting history. 
         setStreamingMessage('');
       }
     } catch (error) {
-      console.error('Error sending message:', error);
+      logger.error('Error sending message:', error);
       dispatch({
         type: actions.ADD_NOTIFICATION,
         payload: { 

@@ -10,7 +10,7 @@ export const documentIntelligence = {
   // Analyze a set of documents for deep insights
   async analyzeDocumentSet(documentIds, analysisType = 'financial') {
     try {
-      console.log('Analyzing document set:', documentIds, analysisType);
+      logger.debug('Analyzing document set:', documentIds, analysisType);
       
       // For demo purposes without real documents loaded
       if (documentIds.length === 0) {
@@ -31,7 +31,7 @@ export const documentIntelligence = {
       // Fallback to sample analysis
       return this.generateSampleAnalysis(analysisType);
     } catch (error) {
-      console.error('Document analysis error:', error);
+      logger.error('Document analysis error:', error);
       throw error;
     }
   },
@@ -114,11 +114,11 @@ Please provide your analysis in JSON format with:
       try {
         return JSON.parse(claudeResponse);
       } catch (parseError) {
-        console.warn('Could not parse Claude response, using fallback');
+        logger.warn('Could not parse Claude response, using fallback');
         return this.generateSampleAnalysis(analysisType);
       }
     } catch (error) {
-      console.error('Claude analysis error:', error);
+      logger.error('Claude analysis error:', error);
       return this.generateSampleAnalysis(analysisType);
     }
   },
@@ -292,7 +292,7 @@ Please provide your analysis in JSON format with:
         }
       };
     } catch (error) {
-      console.error('Financial extraction error:', error);
+      logger.error('Financial extraction error:', error);
       return null;
     }
   },
@@ -334,7 +334,7 @@ Please provide your analysis in JSON format with:
       
       return references;
     } catch (error) {
-      console.error('Cross-reference error:', error);
+      logger.error('Cross-reference error:', error);
       return [];
     }
   },
@@ -378,7 +378,7 @@ Format each insight as a clear, actionable statement.`;
       
       return insights.slice(0, 5);
     } catch (error) {
-      console.error('Insight generation error:', error);
+      logger.error('Insight generation error:', error);
       return this.generateBasicInsights(document);
     }
   },
@@ -454,7 +454,7 @@ Format each insight as a clear, actionable statement.`;
       
       return structuredData;
     } catch (error) {
-      console.error('Data extraction error:', error);
+      logger.error('Data extraction error:', error);
       return null;
     }
   },
@@ -493,7 +493,7 @@ Format each insight as a clear, actionable statement.`;
       
       return comparison;
     } catch (error) {
-      console.error('Document comparison error:', error);
+      logger.error('Document comparison error:', error);
       return null;
     }
   }

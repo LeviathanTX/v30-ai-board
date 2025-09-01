@@ -171,7 +171,7 @@ export default function AIHub() {
           });
         }, 3000);
       } catch (error) {
-        console.error('Upload error:', error);
+        logger.error('Upload error:', error);
         dispatch({
           type: actions.ADD_NOTIFICATION,
           payload: {
@@ -285,7 +285,7 @@ Key Points: ${doc.extractedData.keywords?.map(k => k.word).join(', ') || 'None i
 
       setStreamingMessage('');
     } catch (error) {
-      console.error('Error sending message:', error);
+      logger.error('Error sending message:', error);
       dispatch({
         type: actions.ADD_NOTIFICATION,
         payload: {

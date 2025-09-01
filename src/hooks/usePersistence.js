@@ -99,7 +99,7 @@ export function usePersistence() {
         });
       }
     } catch (error) {
-      console.error('Failed to load initial state:', error);
+      logger.error('Failed to load initial state:', error);
       dispatch({
         type: actions.ADD_NOTIFICATION,
         payload: {

@@ -33,7 +33,7 @@ export function VoiceProvider({ children }) {
       };
 
       recognition.current.onerror = (event) => {
-        console.error('Speech recognition error:', event.error);
+        logger.error('Speech recognition error:', event.error);
         setVoiceError(event.error);
         setIsListening(false);
       };
@@ -67,7 +67,7 @@ export function VoiceProvider({ children }) {
         setIsListening(true);
         setVoiceError(null);
       } catch (error) {
-        console.error('Failed to start recognition:', error);
+        logger.error('Failed to start recognition:', error);
         setVoiceError('Failed to start voice input');
       }
     } else {

@@ -69,7 +69,7 @@ class SecureAIService {
             const parsed = JSON.parse(data);
             yield parsed;
           } catch (e) {
-            console.error('Failed to parse SSE data:', e);
+            logger.error('Failed to parse SSE data:', e);
           }
         }
       }

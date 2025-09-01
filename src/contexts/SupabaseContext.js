@@ -57,7 +57,7 @@ export function SupabaseProvider({ children }) {
       dispatch({ type: actions.SET_USER, payload: data });
     } catch (error) {
       if (process.env.NODE_ENV === 'development') {
-        console.log('Auth check error:', error);
+        logger.debug('Auth check error:', error);
       }
       setUser(null);
     } finally {
@@ -72,7 +72,7 @@ export function SupabaseProvider({ children }) {
     // Subscribe to auth changes
     const unsubscribe = authService.onAuthStateChange((event, session) => {
       if (process.env.NODE_ENV === 'development') {
-        console.log('Auth state change:', event);
+        logger.debug('Auth state change:', event);
       }
       
       if (event === 'SIGNED_IN' && session?.user) {
@@ -113,7 +113,7 @@ export function SupabaseProvider({ children }) {
       
       setUser(null);
     } catch (error) {
-      console.error('Sign out error:', error);
+      logger.error('Sign out error:', error);
       setError(error.message);
     }
   };

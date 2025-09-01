@@ -80,22 +80,22 @@ export const NAVIGATION_CONFIG = {
 export const INTEGRATION_HOOKS = {
   // Called when module is initialized
   onModuleInit: () => {
-    console.log('DocumentHub-CS21-v4 module initialized');
+    logger.debug('DocumentHub-CS21-v4 module initialized');
   },
 
   // Called when module is unmounted
   onModuleDestroy: () => {
-    console.log('DocumentHub-CS21-v4 module destroyed');
+    logger.debug('DocumentHub-CS21-v4 module destroyed');
   },
 
   // Called when new documents are uploaded
   onDocumentsUploaded: (documents) => {
-    console.log(`${documents.length} documents uploaded to DocumentHub`);
+    logger.debug(`${documents.length} documents uploaded to DocumentHub`);
   },
 
   // Called when analysis is completed
   onAnalysisComplete: (analysisResults) => {
-    console.log('Document analysis completed', analysisResults);
+    logger.debug('Document analysis completed', analysisResults);
   }
 };
 
@@ -221,7 +221,7 @@ export const PerformanceMonitor = {
       startTime: Date.now(),
       end: function() {
         const duration = Date.now() - this.startTime;
-        console.log(`DocumentHub ${operation} took ${duration}ms`);
+        logger.debug(`DocumentHub ${operation} took ${duration}ms`);
         return duration;
       }
     };
@@ -229,7 +229,7 @@ export const PerformanceMonitor = {
 
   logMemoryUsage: () => {
     if (window.performance && window.performance.memory) {
-      console.log('DocumentHub Memory Usage:', {
+      logger.debug('DocumentHub Memory Usage:', {
         used: Math.round(window.performance.memory.usedJSHeapSize / 1024 / 1024) + 'MB',
         total: Math.round(window.performance.memory.totalJSHeapSize / 1024 / 1024) + 'MB'
       });

@@ -28,7 +28,9 @@ const defaultAdvisors = [
     },
     is_custom: false,
     is_host: true,
-    specialty_focus: 'governance'
+    specialty_focus: 'governance',
+    ai_service: 'openai',
+    preferred_model: 'gpt-4o'
   },
 
   // Celebrity Business Leaders
@@ -47,6 +49,32 @@ const defaultAdvisors = [
       philosophy: 'Success comes from outworking everyone and never being satisfied with good enough.'
     },
     avatar_emoji: '🦈',
+    voice_profile: {
+      style: 'direct',
+      gender: 'male'
+    },
+    is_custom: false,
+    is_celebrity: true,
+    specialty_focus: 'entrepreneurship',
+    ai_service: 'openai',
+    preferred_model: 'gpt-4o'
+  },
+
+  {
+    id: '6',
+    name: 'Jason Calacanis',
+    role: 'Angel Investor & Entrepreneur',
+    expertise: ['Angel Investing', 'Startups', 'Media', 'Technology', 'Podcasting', 'Early Stage Ventures'],
+    personality: {
+      traits: ['analytical', 'educational', 'detailed', 'strategic', 'supportive'],
+      communication_style: 'mentor',
+      catchphrases: ['Let me break this down for you...', 'The data shows...', 'In my experience with startups...', 'Here\'s what you need to know...']
+    },
+    background: {
+      story: 'Serial entrepreneur and angel investor. Founded Weblogs, Inc. and hosts the This Week in Startups podcast. Invested in over 300 startups including Uber, Robinhood, and Tumblr.',
+      philosophy: 'Success in startups comes from helping founders avoid common mistakes and providing actionable insights.'
+    },
+    avatar_emoji: '📈',
     voice_profile: {
       style: 'assertive',
       gender: 'male'
@@ -361,6 +389,13 @@ export const actionTypes = {
   // Settings
   UPDATE_SETTINGS: 'UPDATE_SETTINGS',
   
+  // Enhanced Meeting & AI Services
+  SET_ENHANCED_MEETING_MODE: 'SET_ENHANCED_MEETING_MODE',
+  TOGGLE_ENHANCED_MEETING: 'TOGGLE_ENHANCED_MEETING',
+  SET_AI_SERVICES: 'SET_AI_SERVICES',
+  UPDATE_AI_SERVICE: 'UPDATE_AI_SERVICE',
+  SET_DEFAULT_AI_SERVICE: 'SET_DEFAULT_AI_SERVICE',
+  
   // Bulk operations
   RESET_STATE: 'RESET_STATE',
   LOAD_USER_DATA: 'LOAD_USER_DATA'
@@ -539,6 +574,48 @@ function appStateReducer(state, action) {
         ...state, 
         settings: { ...state.settings, ...action.payload }
       };
+      
+    case actionTypes.SET_ENHANCED_MEETING_MODE:
+      return {
+        ...state,
+        enhancedMeeting: {
+          ...state.enhancedMeeting,
+          ...action.payload
+        }
+      };
+      
+    case actionTypes.TOGGLE_ENHANCED_MEETING:
+      return {
+        ...state,
+        enhancedMeeting: {
+          ...state.enhancedMeeting,
+          enabled: !state.enhancedMeeting.enabled
+        }
+      };
+      
+    case actionTypes.SET_AI_SERVICES:
+      return {
+        ...state,
+        aiServices: action.payload
+      };
+      
+    case actionTypes.UPDATE_AI_SERVICE:
+      return {
+        ...state,
+        aiServices: {
+          ...state.aiServices,
+          [action.payload.service]: {
+            ...state.aiServices[action.payload.service],
+            ...action.payload.config
+          }
+        }
+      };
+      
+    case actionTypes.SET_DEFAULT_AI_SERVICE:
+      return {
+        ...state,
+        defaultAiService: action.payload
+      };
     
     // Bulk operations
     case actionTypes.RESET_STATE:
@@ -570,7 +647,7 @@ export function AppStateProvider({ children }) {
         const { data: advisors, error } = await advisorService.getDefaultAdvisors();
         
         if (error) {
-          console.error('Error loading advisors:', error);
+          logger.error('Error loading advisors:', error);
         } else if (advisors && advisors.length > 0) {
           dispatch({ type: actionTypes.SET_ADVISORS, payload: advisors });
           // Auto-select first few advisors (or all if less than 5)
@@ -578,7 +655,7 @@ export function AppStateProvider({ children }) {
           dispatch({ type: actionTypes.SELECT_ADVISORS, payload: selectedAdvisors });
         }
       } catch (error) {
-        console.error('Error loading advisors:', error);
+        logger.error('Error loading advisors:', error);
       } finally {
         dispatch({ type: actionTypes.SET_ADVISORS_LOADING, payload: false });
       }
@@ -606,7 +683,7 @@ export function AppStateProvider({ children }) {
           dispatch({ type: actionTypes.UPDATE_SETTINGS, payload: JSON.parse(savedSettings) });
         }
       } catch (error) {
-        console.error('Error loading local data:', error);
+        logger.error('Error loading local data:', error);
       }
     };
 

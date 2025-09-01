@@ -32,7 +32,7 @@ export function useRealtimeConversation(conversationId) {
       onPresenceSync: (presenceState) => {
         // Show who's viewing the conversation
         const users = Object.values(presenceState).flat();
-        console.log('Users in conversation:', users);
+        logger.debug('Users in conversation:', users);
       },
       onUserJoin: ({ newPresences }) => {
         // Show notification when someone joins

@@ -211,7 +211,7 @@ export default function AIHub() {
         setStreamingMessage('');
       }
     } catch (error) {
-      console.error('Error sending message:', error);
+      logger.error('Error sending message:', error);
       dispatch({
         type: actions.ADD_NOTIFICATION,
         payload: { 
