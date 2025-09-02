@@ -182,7 +182,7 @@ How would you like to start?`,
       for (const advisor of activeAdvisors) {
         const response = await aiService.sendMessage(message, advisor, {
           conversationHistory: state.conversationMessages || [],
-          documents: state.documents || [],
+          documents: state.isMeetingActive ? (state.meetingDocuments || []) : (state.documents || []),
           stream: false
         });
 

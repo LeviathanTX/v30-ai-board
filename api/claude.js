@@ -26,9 +26,29 @@ export default async function handler(request) {
     // Get API key from request body (client provides it)
     const apiKey = body.apiKey || process.env.ANTHROPIC_API_KEY;
     
+    // Debug logging
+    console.log('API Key received:', apiKey ? 'Present' : 'Missing');
+    console.log('API Key length:', apiKey ? apiKey.length : 0);
+    console.log('API Key starts with:', apiKey ? apiKey.substring(0, 7) + '...' : 'N/A');
+    
     if (!apiKey) {
+      console.log('No API key provided in request');
       return new Response(
         JSON.stringify({ error: 'API key not provided' }), 
+        { 
+          status: 400,
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+          },
+        }
+      );
+    }
+    
+    if (!apiKey.trim() || apiKey.trim().length < 10) {
+      console.log('Invalid API key format:', apiKey);
+      return new Response(
+        JSON.stringify({ error: 'Invalid API key format' }), 
         { 
           status: 400,
           headers: {
