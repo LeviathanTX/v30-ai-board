@@ -28,14 +28,13 @@ const testAIConnection = async (service, apiKey) => {
       }
     },
     anthropic: {
-      url: 'https://api.anthropic.com/v1/messages',
+      url: '/api/claude',
       headers: {
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
         'Content-Type': 'application/json'
       },
       method: 'POST',
       body: JSON.stringify({
+        apiKey: apiKey,
         model: 'claude-3-5-sonnet-20241022',
         max_tokens: 10,
         messages: [{ role: 'user', content: 'Test' }]

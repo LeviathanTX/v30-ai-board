@@ -3,7 +3,8 @@ import logger from '../utils/logger';
 
 class AIService {
   constructor() {
-    this.apiUrl = 'https://api.anthropic.com/v1/messages';
+    // Use our API proxy instead of calling Anthropic directly
+    this.apiUrl = '/api/claude';
   }
 
   // Get API key from localStorage or environment
@@ -35,11 +36,10 @@ class AIService {
       const response = await fetch(this.apiUrl, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01'
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
+          apiKey: apiKey, // Include API key in body for proxy
           model: 'claude-3-opus-20240229',
           max_tokens: 1024,
           system: systemPrompt,

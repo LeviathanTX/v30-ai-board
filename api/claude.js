@@ -23,14 +23,14 @@ export default async function handler(request) {
   try {
     const body = await request.json();
     
-    // Get API key from environment variable (server-side)
-    const apiKey = process.env.ANTHROPIC_API_KEY;
+    // Get API key from request body (client provides it)
+    const apiKey = body.apiKey || process.env.ANTHROPIC_API_KEY;
     
     if (!apiKey) {
       return new Response(
-        JSON.stringify({ error: 'API key not configured on server' }), 
+        JSON.stringify({ error: 'API key not provided' }), 
         { 
-          status: 500,
+          status: 400,
           headers: {
             'Content-Type': 'application/json',
             'Access-Control-Allow-Origin': '*',
@@ -38,6 +38,9 @@ export default async function handler(request) {
         }
       );
     }
+    
+    // Remove apiKey from the body before sending to Anthropic
+    const { apiKey: _, ...anthropicBody } = body;
 
     // Forward request to Anthropic API
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -47,7 +50,7 @@ export default async function handler(request) {
         'x-api-key': apiKey,
         'anthropic-version': '2023-06-01',
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify(anthropicBody),
     });
 
     const data = await response.json();
