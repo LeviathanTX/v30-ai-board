@@ -6,6 +6,7 @@ import {
   Maximize2, Minimize2
 } from 'lucide-react';
 import { SharkTankTimer } from './MeetingEnvironmentSelector';
+import logger from '../../utils/logger';
 
 export default function SharkTankEnvironment({ 
   advisors = [], 

@@ -5,6 +5,8 @@ import { AI_SERVICES } from '../../config/aiServices';
 import { knowledgeBaseService } from '../../services/supabase';
 import { useSupabase } from '../../contexts/SupabaseContext';
 import AdvisorVoiceSettings from '../VoiceControl/AdvisorVoiceSettings';
+import AdvisorVoiceConfiguration from '../VoiceControl/AdvisorVoiceConfiguration';
+import logger from '../../utils/logger';
 
 export default function EnhancedEditAdvisorModal({ isOpen, onClose, advisor, onUpdateAdvisor }) {
   const { user } = useSupabase();
@@ -25,6 +27,24 @@ export default function EnhancedEditAdvisorModal({ isOpen, onClose, advisor, onU
       service_id: 'anthropic',
       model: 'claude-3-5-sonnet-20241022'
     },
+    voice_settings: {
+      enabled: false,
+      model: 'openai',
+      voice: 'alloy',
+      speed: 1.0,
+      pitch: 1.0,
+      volume: 1.0,
+      stability: 0.5,
+      similarity: 0.75,
+      style: 0.0,
+      useSSML: false,
+      customPrompt: '',
+      emotionSettings: {
+        enabled: true,
+        adaptToPersonality: true,
+        baseEmotion: 'neutral'
+      }
+    },
     system_prompt: '',
     is_custom: true
   });
@@ -38,6 +58,14 @@ export default function EnhancedEditAdvisorModal({ isOpen, onClose, advisor, onU
   const [avatarType, setAvatarType] = useState('emoji'); // 'emoji' or 'image'
   const [avatarPreview, setAvatarPreview] = useState(null);
   const [showVoiceControl, setShowVoiceControl] = useState(false);
+  
+  // Handle voice settings changes
+  const handleVoiceSettingsChange = (voiceSettings) => {
+    setAdvisorData(prev => ({
+      ...prev,
+      voice_settings: voiceSettings
+    }));
+  };
 
   const communicationStyles = [
     'professional',
@@ -85,6 +113,24 @@ export default function EnhancedEditAdvisorModal({ isOpen, onClose, advisor, onU
         ai_service: advisor.ai_service || {
           service_id: 'anthropic',
           model: 'claude-3-5-sonnet-20241022'
+        },
+        voice_settings: advisor.voice_settings || {
+          enabled: false,
+          model: 'openai',
+          voice: 'alloy',
+          speed: 1.0,
+          pitch: 1.0,
+          volume: 1.0,
+          stability: 0.5,
+          similarity: 0.75,
+          style: 0.0,
+          useSSML: false,
+          customPrompt: '',
+          emotionSettings: {
+            enabled: true,
+            adaptToPersonality: true,
+            baseEmotion: 'neutral'
+          }
         },
         system_prompt: advisor.system_prompt || '',
         is_custom: advisor.is_custom !== undefined ? advisor.is_custom : true
@@ -398,13 +444,12 @@ export default function EnhancedEditAdvisorModal({ isOpen, onClose, advisor, onU
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-8">
-          {/* Voice Control Section - Inline */}
-          <AdvisorVoiceSettings 
+          {/* Advanced Voice Configuration */}
+          <AdvisorVoiceConfiguration 
             advisor={advisorData}
-            onVoiceCommand={handleVoiceCommand}
-            onAdvisorUpdate={handleAdvisorUpdate}
-            showInHeader={false}
-            isVisible={showVoiceControl}
+            onVoiceSettingsChange={handleVoiceSettingsChange}
+            showAdvanced={true}
+            isVisible={true}
           />
 
           {/* Basic Info */}

@@ -1,5 +1,6 @@
 // src/services/openaiRealtime.js
 import { EventEmitter } from 'events';
+import logger from '../utils/logger';
 
 class OpenAIRealtimeService extends EventEmitter {
   constructor() {

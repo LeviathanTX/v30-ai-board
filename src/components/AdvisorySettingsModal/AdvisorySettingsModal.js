@@ -5,6 +5,7 @@ import { useAppState } from '../../contexts/AppStateContext';
 import { advisorService } from '../../services/supabase';
 import { useSupabase } from '../../contexts/SupabaseContext';
 import { openaiRealtimeService } from '../../services/openaiRealtime';
+import logger from '../../utils/logger';
 
 export default function AdvisorySettingsModal({ isOpen, onClose }) {
   const { state, dispatch, actions } = useAppState();

@@ -7,6 +7,7 @@ import {
   FolderOpen, Star, MoreHorizontal, Eye
 } from 'lucide-react';
 import { useAppState } from '../../contexts/AppStateContext';
+import logger from '../../utils/logger';
 
 export default function DashboardModule() {
   const { state, dispatch, actions } = useAppState();

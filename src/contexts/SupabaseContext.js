@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { authService } from '../services/supabase';
 import { useAppState } from './AppStateContext';
+import logger from '../utils/logger';
 
 const SupabaseContext = createContext();
 

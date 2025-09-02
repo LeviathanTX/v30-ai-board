@@ -1,13 +1,28 @@
 // src/services/aiService.js
+import logger from '../utils/logger';
+
 class AIService {
   constructor() {
-    this.apiKey = process.env.REACT_APP_ANTHROPIC_API_KEY;
     this.apiUrl = 'https://api.anthropic.com/v1/messages';
   }
 
+  // Get API key from localStorage or environment
+  getApiKey() {
+    return localStorage.getItem('claude_api_key') || 
+           localStorage.getItem('anthropic_api_key') || 
+           process.env.REACT_APP_ANTHROPIC_API_KEY;
+  }
+
+  // Check if API key is available
+  hasApiKey() {
+    const apiKey = this.getApiKey();
+    return !!(apiKey && apiKey.trim());
+  }
+
   async sendMessage(message, advisor, options = {}) {
-    if (!this.apiKey) {
-      throw new Error('Claude API key not configured. Please check your environment variables.');
+    const apiKey = this.getApiKey();
+    if (!apiKey) {
+      throw new Error('Claude API key not configured. Please add your API key in Settings.');
     }
 
     const { documents = [], conversationHistory = [], stream = false } = options;
@@ -21,7 +36,7 @@ class AIService {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': this.apiKey,
+          'x-api-key': apiKey,
           'anthropic-version': '2023-06-01'
         },
         body: JSON.stringify({

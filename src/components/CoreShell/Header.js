@@ -3,9 +3,10 @@ import {
   Search, Bell, Command, Sparkles, BarChart3, 
   Shield, Zap, HelpCircle, ChevronDown, X,
   Calendar, Clock, TrendingUp, AlertCircle,
-  FileText, MessageSquare, Users
+  FileText, MessageSquare, Users, Mic, Volume2, Wifi
 } from 'lucide-react';
 import { useAppState } from '../../contexts/AppStateContext';
+import { openaiRealtimeService } from '../../services/openaiRealtime';
 
 export default function Header({ 
   searchQuery, 
@@ -17,11 +18,59 @@ export default function Header({
   const { state, dispatch } = useAppState();
   const [showAIInsight, setShowAIInsight] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [voiceConnectionStatus, setVoiceConnectionStatus] = useState({
+    openai: false,
+    elevenlabs: false,
+    azure: false,
+    google: false
+  });
+  const [showVoiceStatus, setShowVoiceStatus] = useState(false);
   const isDarkMode = state.settings?.theme === 'dark';
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 60000);
     return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    // Voice service connection status listeners
+    const updateOpenAIStatus = () => {
+      setVoiceConnectionStatus(prev => ({
+        ...prev,
+        openai: openaiRealtimeService.isConnected
+      }));
+    };
+
+    // Check for other voice service connections based on stored API keys
+    const checkVoiceServices = () => {
+      const elevenLabsKey = localStorage.getItem('elevenlabs_api_key');
+      const azureKey = localStorage.getItem('azure_speech_key');
+      const googleKey = localStorage.getItem('google_cloud_key');
+      
+      setVoiceConnectionStatus(prev => ({
+        ...prev,
+        elevenlabs: !!elevenLabsKey,
+        azure: !!azureKey,
+        google: !!googleKey
+      }));
+    };
+
+    // Set up OpenAI realtime service listeners
+    openaiRealtimeService.on('connected', updateOpenAIStatus);
+    openaiRealtimeService.on('disconnected', updateOpenAIStatus);
+    
+    // Initial status check
+    updateOpenAIStatus();
+    checkVoiceServices();
+    
+    // Check voice services status periodically
+    const voiceTimer = setInterval(checkVoiceServices, 30000);
+
+    return () => {
+      clearInterval(voiceTimer);
+      openaiRealtimeService.removeListener('connected', updateOpenAIStatus);
+      openaiRealtimeService.removeListener('disconnected', updateOpenAIStatus);
+    };
   }, []);
 
   const stats = {
@@ -184,6 +233,86 @@ export default function Header({
             <span className="text-sm">
               {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </span>
+          </div>
+
+          {/* Voice Status Indicator */}
+          <div className="relative">
+            <button
+              onClick={() => setShowVoiceStatus(!showVoiceStatus)}
+              className={`
+                p-2.5 rounded-lg transition-all duration-200 relative
+                ${showVoiceStatus
+                  ? isDarkMode 
+                    ? 'bg-gray-800 text-white' 
+                    : 'bg-gray-100 text-gray-900'
+                  : isDarkMode 
+                    ? 'hover:bg-gray-800 text-gray-400 hover:text-white' 
+                    : 'hover:bg-gray-100 text-gray-600 hover:text-gray-900'
+                }
+              `}
+              title="Voice Services Status"
+            >
+              <Volume2 size={20} />
+              {/* Connection indicator dot */}
+              {Object.values(voiceConnectionStatus).some(connected => connected) && (
+                <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-green-500 rounded-full"></span>
+              )}
+            </button>
+            
+            {/* Voice Status Dropdown */}
+            {showVoiceStatus && (
+              <div className={`
+                absolute top-full right-0 mt-2 w-64
+                ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}
+                rounded-xl shadow-xl border z-50
+              `}>
+                <div className={`
+                  p-3 ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} 
+                  border-b
+                `}>
+                  <h3 className={`font-medium text-sm ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                    Voice Services
+                  </h3>
+                </div>
+                
+                <div className="p-2">
+                  {[
+                    { key: 'openai', name: 'OpenAI Realtime', icon: '🤖' },
+                    { key: 'elevenlabs', name: 'ElevenLabs', icon: '🎙️' },
+                    { key: 'azure', name: 'Azure Speech', icon: '☁️' },
+                    { key: 'google', name: 'Google Cloud TTS', icon: '🔊' }
+                  ].map(service => (
+                    <div key={service.key} className={`
+                      flex items-center justify-between p-2 rounded-lg
+                      ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}
+                    `}>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm">{service.icon}</span>
+                        <span className={`text-sm ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
+                          {service.name}
+                        </span>
+                      </div>
+                      <div className={`
+                        w-2 h-2 rounded-full
+                        ${voiceConnectionStatus[service.key] ? 'bg-green-500' : 'bg-red-400'}
+                      `}></div>
+                    </div>
+                  ))}
+                </div>
+                
+                <div className={`
+                  p-3 ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} 
+                  border-t text-center
+                `}>
+                  <button className={`
+                    text-xs ${isDarkMode ? 'text-blue-400' : 'text-blue-600'} 
+                    hover:underline
+                  `}>
+                    Configure Voice Services
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Quick Actions */}

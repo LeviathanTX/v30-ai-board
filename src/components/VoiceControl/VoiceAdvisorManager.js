@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Mic, MicOff, Volume2, VolumeX, Play, Square, Settings } from 'lucide-react';
 import { openaiRealtimeService } from '../../services/openaiRealtime';
 import { useAppState } from '../../contexts/AppStateContext';
+import logger from '../../utils/logger';
 
 export default function VoiceAdvisorManager({ 
   isVisible = false, 

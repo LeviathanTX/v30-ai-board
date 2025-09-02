@@ -75,7 +75,7 @@ class Logger {
     } : {};
     
     const fullContext = { ...context, ...errorInfo };
-    logger.error(this.formatMessage('ERROR', message, fullContext));
+    console.error(this.formatMessage('ERROR', message, fullContext));
     
     // In production, could send to error reporting service
     if (this.isProduction && window.gtag) {
@@ -91,7 +91,7 @@ class Logger {
    */
   warn(message, context = {}) {
     if (!this.shouldLog('WARN')) return;
-    logger.warn(this.formatMessage('WARN', message, context));
+    console.warn(this.formatMessage('WARN', message, context));
   }
 
   /**
@@ -99,7 +99,7 @@ class Logger {
    */
   info(message, context = {}) {
     if (!this.shouldLog('INFO')) return;
-    logger.info(this.formatMessage('INFO', message, context));
+    console.info(this.formatMessage('INFO', message, context));
   }
 
   /**
@@ -107,7 +107,7 @@ class Logger {
    */
   debug(message, context = {}) {
     if (!this.shouldLog('DEBUG')) return;
-    logger.debug(this.formatMessage('DEBUG', message, context));
+    console.debug(this.formatMessage('DEBUG', message, context));
   }
 
   /**

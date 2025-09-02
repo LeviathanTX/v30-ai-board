@@ -9,6 +9,7 @@ import CreateAdvisorModal from '../../components/CreateAdvisorModal/EnhancedCrea
 import EditAdvisorModal from '../../components/EditAdvisorModal/EnhancedEditAdvisorModal';
 import AdvisorySettingsModal from '../../components/AdvisorySettingsModal/AdvisorySettingsModal';
 import VoiceAdvisorManager from '../../components/VoiceControl/VoiceAdvisorManager';
+import logger from '../../utils/logger';
 
 export default function EnhancedAdvisoryHub() {
   const { state, dispatch, actions } = useAppState();

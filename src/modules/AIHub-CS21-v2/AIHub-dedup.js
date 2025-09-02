@@ -10,9 +10,12 @@ import { useAppState } from '../../contexts/AppStateContext';
 import { useVoice } from '../../contexts/VoiceContext';
 import aiService from '../../services/aiService';
 import MeetingEnvironmentSelector from '../../components/MeetingEnvironment/MeetingEnvironmentSelector';
-import BoardRoomEnvironment from '../../components/MeetingEnvironment/BoardRoomEnvironment';
-import SharkTankEnvironment from '../../components/MeetingEnvironment/SharkTankEnvironment';
+import HighTechBoardRoom from '../../components/MeetingEnvironment/HighTechBoardRoom';
+import UltimateSharkTank from '../../components/MeetingEnvironment/UltimateSharkTank';
+import HighTechSharkTank from '../../components/MeetingEnvironment/HighTechSharkTank';
+import InvestmentPodAdvanced from '../../components/MeetingEnvironment/InvestmentPodAdvanced';
 import ContextHelp, { HelpTooltip } from '../../components/Help/ContextHelp';
+import logger from '../../utils/logger';
 
 export default function AIHub() {
   const { state, dispatch, actions } = useAppState();
@@ -349,9 +352,9 @@ ${'='.repeat(60)}
   // Render chat interface wrapped in selected environment
   const renderChatInterface = () => {
     const chatContent = (
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col h-full">
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto px-6 py-4">
+        <div className="flex-1 overflow-y-auto px-6 py-4" style={{ maxHeight: '60vh', minHeight: '400px' }}>
           {state.conversationMessages?.map((msg) => (
             <div
               key={msg.id}
@@ -500,25 +503,47 @@ ${'='.repeat(60)}
     switch (currentEnvironment) {
       case 'boardroom':
         return (
-          <BoardRoomEnvironment
+          <HighTechBoardRoom
             advisors={state.advisors || []}
-            selectedAdvisors={advisors}
+            selectedAdvisors={selectedAdvisors}
             messages={state.conversationMessages || []}
             onMessageSend={handleSendMessage}
           >
             {chatContent}
-          </BoardRoomEnvironment>
+          </HighTechBoardRoom>
         );
       case 'sharktank':
         return (
-          <SharkTankEnvironment
+          <UltimateSharkTank
             advisors={state.advisors || []}
-            selectedAdvisors={advisors}
+            selectedAdvisors={selectedAdvisors}
             messages={state.conversationMessages || []}
             onMessageSend={handleSendMessage}
           >
             {chatContent}
-          </SharkTankEnvironment>
+          </UltimateSharkTank>
+        );
+      case 'techpod':
+        return (
+          <HighTechSharkTank
+            advisors={state.advisors || []}
+            selectedAdvisors={selectedAdvisors}
+            messages={state.conversationMessages || []}
+            onMessageSend={handleSendMessage}
+          >
+            {chatContent}
+          </HighTechSharkTank>
+        );
+      case 'investment-pod':
+        return (
+          <InvestmentPodAdvanced
+            advisors={state.advisors || []}
+            selectedAdvisors={selectedAdvisors}
+            messages={state.conversationMessages || []}
+            onMessageSend={handleSendMessage}
+          >
+            {chatContent}
+          </InvestmentPodAdvanced>
         );
       default:
         return chatContent;
@@ -606,11 +631,11 @@ ${'='.repeat(60)}
       <div className="flex-1 flex overflow-hidden">
         {/* Environment-Wrapped Chat Area */}
         {currentEnvironment === 'chat' ? (
-          <div className="flex-1">
+          <div className="flex-1 flex flex-col h-full">
             {renderChatInterface()}
           </div>
         ) : (
-          <div className="flex-1 relative">
+          <div className="flex-1 flex flex-col h-full relative">
             {renderChatInterface()}
           </div>
         )}

@@ -1,12 +1,29 @@
 // src/services/documentProcessor.js
-import * as pdfjsLib from 'pdfjs-dist';
-import * as pdfjsWorker from 'pdfjs-dist/build/pdf.worker.mjs';
 import mammoth from 'mammoth';
 import ExcelJS from 'exceljs';
 import aiService from './aiService';
+import logger from '../utils/logger';
 
-// Configure PDF.js worker for v5+
-pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
+// Lazy load PDF.js only when needed
+let pdfjsLib = null;
+let pdfjsWorker = null;
+
+const loadPDFJS = async () => {
+  if (!pdfjsLib) {
+    logger.debug('Loading PDF.js library...');
+    const [pdfModule, workerModule] = await Promise.all([
+      import('pdfjs-dist'),
+      import('pdfjs-dist/build/pdf.worker.mjs')
+    ]);
+    pdfjsLib = pdfModule;
+    pdfjsWorker = workerModule;
+    
+    // Configure PDF.js worker for v5+
+    pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
+    logger.debug('PDF.js library loaded successfully');
+  }
+  return pdfjsLib;
+};
 
 class DocumentProcessor {
   constructor() {
@@ -51,8 +68,11 @@ class DocumentProcessor {
 
   async processPDF(file) {
     try {
+      // Lazy load PDF.js only when processing PDFs
+      const pdfjs = await loadPDFJS();
+      
       const arrayBuffer = await file.arrayBuffer();
-      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
       let fullText = '';
 
       for (let i = 1; i <= pdf.numPages; i++) {

@@ -6,6 +6,7 @@ import UnifiedSidebar from './UnifiedSidebar';
 import CommandPalette from './CommandPalette';
 import HelpProvider from '../Help/HelpProvider';
 import HelpDocumentation from '../Help/HelpDocumentation';
+import logger from '../../utils/logger';
 
 // Import modules
 const moduleComponents = {
@@ -17,11 +18,15 @@ const moduleComponents = {
   settings: React.lazy(() => import('../../modules/SettingsHub-CS21-v1/SettingsHub'))
 };
 
-export default function CoreShell() {
-  const [activeModule, setActiveModule] = useState('ai');
+export default function CoreShell({ activeModule: propActiveModule, setActiveModule: propSetActiveModule }) {
+  const [localActiveModule, setLocalActiveModule] = useState('ai');
   const [showCommandPalette, setShowCommandPalette] = useState(false);
   const { state, dispatch } = useAppState();
   const { user } = useSupabase();
+
+  // Use props if provided, otherwise use local state
+  const activeModule = propActiveModule || localActiveModule;
+  const setActiveModule = propSetActiveModule || setLocalActiveModule;
 
   // Load default starting page from settings
   useEffect(() => {

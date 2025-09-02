@@ -1,4 +1,4 @@
-// V21 App.js with Authentication and Cloud Persistence
+// V21 App.js with Authentication, Cloud Persistence, and Enhanced UX
 import React, { useState, useEffect } from 'react';
 import { 
   Brain, FileText, Users, Video, CreditCard, Home,
@@ -8,10 +8,14 @@ import { AppStateProvider } from './contexts/AppStateContext';
 import { SupabaseProvider, useSupabase } from './contexts/SupabaseContext';
 import { VoiceProvider } from './contexts/VoiceContext';
 import { AIServiceProvider } from './contexts/AIServiceContext';
+import { OnboardingProvider, useOnboarding } from './contexts/OnboardingContext';
+import { ToastProvider } from './contexts/ToastContext';
 import CoreShell from './components/CoreShell/CoreShell';
 import AuthScreen from './components/Auth/AuthScreen';
+import OnboardingTour from './components/Onboarding/OnboardingTour';
 import { usePersistence } from './hooks/usePersistence';
 import { FEATURES } from './config/features';
+import logger from './utils/logger';
 
 // Import diagnostics in development
 if (process.env.NODE_ENV === 'development') {
@@ -67,10 +71,12 @@ function SyncStatusIndicator() {
   );
 }
 
-// App Content with Persistence
+// Enhanced App Content with Onboarding
 function AppContent() {
   const { user, loading } = useSupabase();
+  const { isOnboardingActive, completeOnboarding, skipOnboarding } = useOnboarding();
   const persistence = usePersistence();
+  const [activeModule, setActiveModule] = useState('dashboard');
 
   // Initialize persistence when user logs in
   useEffect(() => {
@@ -81,10 +87,14 @@ function AppContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+          <div className="relative">
+            <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto"></div>
+            <div className="absolute inset-0 rounded-full h-16 w-16 border-t-4 border-purple-600 animate-spin mx-auto" style={{animationDirection: 'reverse', animationDuration: '3s'}}></div>
+          </div>
+          <p className="mt-6 text-gray-700 font-medium">Initializing your AI advisory board...</p>
+          <div className="mt-2 text-sm text-gray-500">Please wait while we prepare everything</div>
         </div>
       </div>
     );
@@ -96,8 +106,19 @@ function AppContent() {
 
   return (
     <>
-      <CoreShell />
+      <CoreShell activeModule={activeModule} setActiveModule={setActiveModule} />
       <SyncStatusIndicator />
+      
+      {/* Onboarding Tour */}
+      {isOnboardingActive && (
+        <OnboardingTour
+          isActive={isOnboardingActive}
+          onComplete={completeOnboarding}
+          onSkip={skipOnboarding}
+          currentModule={activeModule}
+          setActiveModule={setActiveModule}
+        />
+      )}
     </>
   );
 }
@@ -106,11 +127,15 @@ function App() {
   return (
     <AppStateProvider>
       <SupabaseProvider>
-        <AIServiceProvider>
-          <VoiceProvider>
-            <AppContent />
-          </VoiceProvider>
-        </AIServiceProvider>
+        <OnboardingProvider>
+          <ToastProvider position="top-right" maxToasts={5}>
+            <AIServiceProvider>
+              <VoiceProvider>
+                <AppContent />
+              </VoiceProvider>
+            </AIServiceProvider>
+          </ToastProvider>
+        </OnboardingProvider>
       </SupabaseProvider>
     </AppStateProvider>
   );

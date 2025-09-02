@@ -1,5 +1,6 @@
 // src/contexts/VoiceContext.js
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import logger from '../utils/logger';
 
 const VoiceContext = createContext();
 

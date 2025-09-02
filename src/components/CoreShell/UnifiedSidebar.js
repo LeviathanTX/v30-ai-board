@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, memo, useMemo, useCallback } from 'react';
 import { 
   Home, FileText, Users, MessageSquare, Video, CreditCard,
   Search, Settings, LogOut, ChevronLeft, ChevronRight,
@@ -11,7 +11,7 @@ import { useAppState } from '../../contexts/AppStateContext';
 import { useHelp } from '../Help/HelpProvider';
 import { HelpTooltip } from '../Help/ContextHelp';
 
-export default function UnifiedSidebar({ activeModule, setActiveModule, user }) {
+function UnifiedSidebar({ activeModule, setActiveModule, user }) {
   const [collapsed, setCollapsed] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -249,7 +249,7 @@ export default function UnifiedSidebar({ activeModule, setActiveModule, user }) 
 
 
   return (
-    <div className={`${collapsed ? 'w-16' : 'w-64'} bg-white border-r border-gray-200 flex flex-col transition-all duration-300`}>
+    <div className={`${collapsed ? 'w-16' : 'w-64'} bg-white border-r border-gray-200 flex flex-col transition-all duration-300`} data-tour="sidebar">
       {/* Logo Section */}
       <div className="h-16 flex items-center justify-between px-4 border-b border-gray-200">
         {!collapsed && (
@@ -366,6 +366,7 @@ export default function UnifiedSidebar({ activeModule, setActiveModule, user }) 
                 }
               `}
               title={collapsed ? module.name : ''}
+              data-tour={module.id === 'ai' ? 'ai-board' : module.id === 'documents' ? 'documents' : module.id === 'advisors' ? 'advisors' : module.id === 'settings' ? 'settings' : undefined}
             >
               <Icon size={20} className={`flex-shrink-0 ${isActive ? `text-${module.color}-600` : ''}`} />
               {!collapsed && (
@@ -442,6 +443,7 @@ export default function UnifiedSidebar({ activeModule, setActiveModule, user }) 
                   setShowUserMenu(false);
                 }}
                 className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
+                data-tour="settings"
               >
                 <Settings size={16} />
                 <span>Settings</span>
@@ -472,3 +474,5 @@ export default function UnifiedSidebar({ activeModule, setActiveModule, user }) 
     </div>
   );
 }
+
+export default memo(UnifiedSidebar);

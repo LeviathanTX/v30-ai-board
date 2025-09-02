@@ -1,7 +1,8 @@
 // src/contexts/AIServiceContext.js
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import { useSupabase } from './SupabaseContext';
 import { AI_SERVICES, DEFAULT_SERVICE, validateApiKey } from '../config/aiServices';
+import logger from '../utils/logger';
 
 const AIServiceContext = createContext();
 
@@ -17,12 +18,8 @@ export function AIServiceProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [errors, setErrors] = useState({});
 
-  // Load API configurations on mount
-  useEffect(() => {
-    loadAPIConfigs();
-  }, [user, isDemoMode]);
-
-  const loadAPIConfigs = async () => {
+  // Memoize loadAPIConfigs to prevent recreating on every render
+  const loadAPIConfigs = useCallback(async () => {
     setLoading(true);
     try {
       if (isDemoMode) {
@@ -47,9 +44,14 @@ export function AIServiceProvider({ children }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, isDemoMode]);
 
-  const saveAPIConfigs = async (configs) => {
+  // Load API configurations on mount
+  useEffect(() => {
+    loadAPIConfigs();
+  }, [loadAPIConfigs]);
+
+  const saveAPIConfigs = useCallback(async (configs) => {
     try {
       if (isDemoMode) {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(configs));
@@ -69,9 +71,9 @@ export function AIServiceProvider({ children }) {
       logger.error('Failed to save API configurations:', error);
       return { success: false, error: 'Failed to save configurations' };
     }
-  };
+  }, [user, isDemoMode]);
 
-  const updateAPIKey = async (serviceId, apiKey, model = null) => {
+  const updateAPIKey = useCallback(async (serviceId, apiKey, model = null) => {
     // Validate API key
     const validation = validateApiKey(serviceId, apiKey);
     if (!validation.valid) {
@@ -98,9 +100,9 @@ export function AIServiceProvider({ children }) {
     };
 
     return await saveAPIConfigs(newConfigs);
-  };
+  }, [apiConfigs, saveAPIConfigs]);
 
-  const removeAPIKey = async (serviceId) => {
+  const removeAPIKey = useCallback(async (serviceId) => {
     const newConfigs = { ...apiConfigs };
     delete newConfigs[serviceId];
     
@@ -112,9 +114,9 @@ export function AIServiceProvider({ children }) {
     });
 
     return await saveAPIConfigs(newConfigs);
-  };
+  }, [apiConfigs, saveAPIConfigs]);
 
-  const toggleService = async (serviceId, enabled) => {
+  const toggleService = useCallback(async (serviceId, enabled) => {
     if (!apiConfigs[serviceId]) return { success: false, error: 'Service not configured' };
 
     const newConfigs = {
@@ -126,9 +128,9 @@ export function AIServiceProvider({ children }) {
     };
 
     return await saveAPIConfigs(newConfigs);
-  };
+  }, [apiConfigs, saveAPIConfigs]);
 
-  const updateModel = async (serviceId, model) => {
+  const updateModel = useCallback(async (serviceId, model) => {
     if (!apiConfigs[serviceId]) return { success: false, error: 'Service not configured' };
 
     const newConfigs = {
@@ -140,9 +142,9 @@ export function AIServiceProvider({ children }) {
     };
 
     return await saveAPIConfigs(newConfigs);
-  };
+  }, [apiConfigs, saveAPIConfigs]);
 
-  const getAvailableServices = () => {
+  const getAvailableServices = useCallback(() => {
     // In demo mode, always provide Claude access
     if (isDemoMode) {
       return [{
@@ -162,9 +164,9 @@ export function AIServiceProvider({ children }) {
         ...AI_SERVICES[serviceId],
         ...apiConfigs[serviceId]
       }));
-  };
+  }, [isDemoMode, apiConfigs]);
 
-  const getServiceConfig = (serviceId) => {
+  const getServiceConfig = useCallback((serviceId) => {
     // In demo mode, always provide Claude access
     if (isDemoMode && serviceId === 'anthropic') {
       return {
@@ -184,13 +186,13 @@ export function AIServiceProvider({ children }) {
       ...AI_SERVICES[serviceId],
       ...apiConfigs[serviceId]
     };
-  };
+  }, [isDemoMode, apiConfigs]);
 
-  const hasAnyConfiguredService = () => {
+  const hasAnyConfiguredService = useCallback(() => {
     return getAvailableServices().length > 0;
-  };
+  }, [getAvailableServices]);
 
-  const getDefaultService = () => {
+  const getDefaultService = useCallback(() => {
     const available = getAvailableServices();
     if (available.length === 0) return null;
     
@@ -202,24 +204,24 @@ export function AIServiceProvider({ children }) {
     // Return configured default service if available
     const defaultService = available.find(s => s.id === DEFAULT_SERVICE);
     return defaultService || available[0];
-  };
+  }, [getAvailableServices, isDemoMode]);
 
-  const reportError = (serviceId, error) => {
+  const reportError = useCallback((serviceId, error) => {
     setErrors(prev => ({
       ...prev,
       [serviceId]: typeof error === 'string' ? error : error.message
     }));
-  };
+  }, []);
 
-  const clearError = (serviceId) => {
+  const clearError = useCallback((serviceId) => {
     setErrors(prev => {
       const newErrors = { ...prev };
       delete newErrors[serviceId];
       return newErrors;
     });
-  };
+  }, []);
 
-  const value = {
+  const value = useMemo(() => ({
     // State
     apiConfigs,
     loading,
@@ -241,7 +243,7 @@ export function AIServiceProvider({ children }) {
     // Error handling
     reportError,
     clearError
-  };
+  }), [apiConfigs, loading, errors, updateAPIKey, removeAPIKey, toggleService, updateModel, loadAPIConfigs, getAvailableServices, getServiceConfig, hasAnyConfiguredService, getDefaultService, reportError, clearError]);
 
   return (
     <AIServiceContext.Provider value={value}>

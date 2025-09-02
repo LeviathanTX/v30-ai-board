@@ -4,6 +4,7 @@ import {
   Users, Crown, Star, Briefcase, Clock, FileText, 
   Volume2, Mic, Settings, Eye, EyeOff, Maximize2, Minimize2
 } from 'lucide-react';
+import logger from '../../utils/logger';
 
 export default function BoardRoomEnvironment({ 
   advisors = [], 

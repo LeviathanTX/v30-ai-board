@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { authService, supabase } from '../../services/supabase';
 import { useSupabase } from '../../contexts/SupabaseContext';
+import logger from '../../utils/logger';
 
 export default function AuthScreen() {
   const [mode, setMode] = useState('signin'); // signin, signup

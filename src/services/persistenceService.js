@@ -1,6 +1,7 @@
 // src/services/persistenceService.js
 import { supabase } from './supabase';
 import { FEATURES, SYNC_CONFIG, STORAGE_KEYS, ERROR_MESSAGES, SUCCESS_MESSAGES } from '../config/features';
+import logger from '../utils/logger';
 
 /**
  * PersistenceService handles all data synchronization between local state and Supabase

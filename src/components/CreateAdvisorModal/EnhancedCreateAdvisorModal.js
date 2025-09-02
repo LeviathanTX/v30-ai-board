@@ -4,7 +4,8 @@ import { X, User, Briefcase, Brain, Settings, Upload, FileText, Trash2, CheckCir
 import { AI_SERVICES } from '../../config/aiServices';
 import { knowledgeBaseService } from '../../services/supabase';
 import { useSupabase } from '../../contexts/SupabaseContext';
-import AdvisorVoiceSettings from '../VoiceControl/AdvisorVoiceSettings';
+import AdvisorVoiceConfiguration from '../VoiceControl/AdvisorVoiceConfiguration';
+import logger from '../../utils/logger';
 
 export default function EnhancedCreateAdvisorModal({ isOpen, onClose, onCreateAdvisor }) {
   const { user } = useSupabase();
@@ -26,7 +27,25 @@ export default function EnhancedCreateAdvisorModal({ isOpen, onClose, onCreateAd
       model: 'claude-3-5-sonnet-20241022'
     },
     system_prompt: '',
-    is_custom: true
+    is_custom: true,
+    voice_settings: {
+      enabled: false,
+      model: 'openai',
+      voice: 'alloy',
+      speed: 1.0,
+      pitch: 1.0,
+      volume: 1.0,
+      stability: 0.5,
+      similarity: 0.75,
+      style: 0.0,
+      useSSML: false,
+      customPrompt: '',
+      emotionSettings: {
+        enabled: true,
+        adaptToPersonality: true,
+        baseEmotion: 'neutral'
+      }
+    }
   });
 
   const [currentExpertise, setCurrentExpertise] = useState('');
@@ -197,7 +216,25 @@ export default function EnhancedCreateAdvisorModal({ isOpen, onClose, onCreateAd
         model: 'claude-3-5-sonnet-20241022'
       },
       system_prompt: '',
-      is_custom: true
+      is_custom: true,
+      voice_settings: {
+        enabled: false,
+        model: 'openai',
+        voice: 'alloy',
+        speed: 1.0,
+        pitch: 1.0,
+        volume: 1.0,
+        stability: 0.5,
+        similarity: 0.75,
+        style: 0.0,
+        useSSML: false,
+        customPrompt: '',
+        emotionSettings: {
+          enabled: true,
+          adaptToPersonality: true,
+          baseEmotion: 'neutral'
+        }
+      }
     });
     setUploadedDocuments([]);
     setUploadError('');
@@ -292,6 +329,13 @@ export default function EnhancedCreateAdvisorModal({ isOpen, onClose, onCreateAd
     }
   };
 
+  const handleVoiceSettingsChange = (voiceSettings) => {
+    setAdvisorData(prev => ({
+      ...prev,
+      voice_settings: voiceSettings
+    }));
+  };
+
   const addExpertise = () => {
     if (currentExpertise.trim() && !advisorData.expertise.includes(currentExpertise.trim())) {
       setAdvisorData(prev => ({
@@ -342,16 +386,15 @@ export default function EnhancedCreateAdvisorModal({ isOpen, onClose, onCreateAd
             Create New AI Advisor
           </h2>
           <div className="flex items-center space-x-4">
-            <div className="relative">
-              <AdvisorVoiceSettings 
-                advisor={advisorData}
-                onVoiceCommand={handleVoiceCommand}
-                onAdvisorUpdate={handleAdvisorUpdate}
-                showInHeader={true}
-                isVisible={showVoiceControl}
-                onToggleVisible={() => setShowVoiceControl(!showVoiceControl)}
-              />
-            </div>
+            <button
+              onClick={() => setShowVoiceControl(!showVoiceControl)}
+              className={`p-2 rounded-lg transition-colors ${
+                showVoiceControl ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+              title="Voice Configuration"
+            >
+              <Volume2 className="w-4 h-4" />
+            </button>
             <button
               onClick={onClose}
               className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
@@ -363,12 +406,11 @@ export default function EnhancedCreateAdvisorModal({ isOpen, onClose, onCreateAd
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-8">
-          {/* Voice Control Section - Inline */}
-          <AdvisorVoiceSettings 
+          {/* Voice Configuration */}
+          <AdvisorVoiceConfiguration 
             advisor={advisorData}
-            onVoiceCommand={handleVoiceCommand}
-            onAdvisorUpdate={handleAdvisorUpdate}
-            showInHeader={false}
+            onVoiceSettingsChange={handleVoiceSettingsChange}
+            showAdvanced={true}
             isVisible={showVoiceControl}
           />
 

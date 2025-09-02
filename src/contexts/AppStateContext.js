@@ -1,6 +1,7 @@
 // src/contexts/AppStateContext.js
-import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, useMemo, useCallback } from 'react';
 import { advisorService } from '../services/supabase';
+import logger from '../utils/logger';
 
 const AppStateContext = createContext();
 
@@ -639,56 +640,58 @@ function appStateReducer(state, action) {
 export function AppStateProvider({ children }) {
   const [state, dispatch] = useReducer(appStateReducer, initialState);
 
+  // Memoize loadAdvisors function
+  const loadAdvisors = useCallback(async () => {
+    try {
+      dispatch({ type: actionTypes.SET_ADVISORS_LOADING, payload: true });
+      const { data: advisors, error } = await advisorService.getDefaultAdvisors();
+      
+      if (error) {
+        logger.error('Error loading advisors:', error);
+      } else if (advisors && advisors.length > 0) {
+        dispatch({ type: actionTypes.SET_ADVISORS, payload: advisors });
+        // Auto-select first few advisors (or all if less than 5)
+        const selectedAdvisors = advisors.slice(0, Math.min(5, advisors.length));
+        dispatch({ type: actionTypes.SELECT_ADVISORS, payload: selectedAdvisors });
+      }
+    } catch (error) {
+      logger.error('Error loading advisors:', error);
+    } finally {
+      dispatch({ type: actionTypes.SET_ADVISORS_LOADING, payload: false });
+    }
+  }, [dispatch]);
+
+  // Memoize loadLocalData function  
+  const loadLocalData = useCallback(() => {
+    try {
+      const savedDocuments = localStorage.getItem('documents');
+      if (savedDocuments) {
+        dispatch({ type: actionTypes.SET_DOCUMENTS, payload: JSON.parse(savedDocuments) });
+      }
+
+      const savedConversations = localStorage.getItem('conversations');
+      if (savedConversations) {
+        dispatch({ type: actionTypes.SET_CONVERSATIONS, payload: JSON.parse(savedConversations) });
+      }
+
+      const savedSettings = localStorage.getItem('settings');
+      if (savedSettings) {
+        dispatch({ type: actionTypes.UPDATE_SETTINGS, payload: JSON.parse(savedSettings) });
+      }
+    } catch (error) {
+      logger.error('Error loading local data:', error);
+    }
+  }, [dispatch]);
+
   // Load advisors from database on mount
   useEffect(() => {
-    const loadAdvisors = async () => {
-      try {
-        dispatch({ type: actionTypes.SET_ADVISORS_LOADING, payload: true });
-        const { data: advisors, error } = await advisorService.getDefaultAdvisors();
-        
-        if (error) {
-          logger.error('Error loading advisors:', error);
-        } else if (advisors && advisors.length > 0) {
-          dispatch({ type: actionTypes.SET_ADVISORS, payload: advisors });
-          // Auto-select first few advisors (or all if less than 5)
-          const selectedAdvisors = advisors.slice(0, Math.min(5, advisors.length));
-          dispatch({ type: actionTypes.SELECT_ADVISORS, payload: selectedAdvisors });
-        }
-      } catch (error) {
-        logger.error('Error loading advisors:', error);
-      } finally {
-        dispatch({ type: actionTypes.SET_ADVISORS_LOADING, payload: false });
-      }
-    };
-
     loadAdvisors();
-  }, []);
+  }, [loadAdvisors]);
 
   // Load data from localStorage on mount
   useEffect(() => {
-    const loadLocalData = () => {
-      try {
-        const savedDocuments = localStorage.getItem('documents');
-        if (savedDocuments) {
-          dispatch({ type: actionTypes.SET_DOCUMENTS, payload: JSON.parse(savedDocuments) });
-        }
-
-        const savedConversations = localStorage.getItem('conversations');
-        if (savedConversations) {
-          dispatch({ type: actionTypes.SET_CONVERSATIONS, payload: JSON.parse(savedConversations) });
-        }
-
-        const savedSettings = localStorage.getItem('settings');
-        if (savedSettings) {
-          dispatch({ type: actionTypes.UPDATE_SETTINGS, payload: JSON.parse(savedSettings) });
-        }
-      } catch (error) {
-        logger.error('Error loading local data:', error);
-      }
-    };
-
     loadLocalData();
-  }, []);
+  }, [loadLocalData]);
 
   // Save to localStorage when state changes
   useEffect(() => {
@@ -703,11 +706,12 @@ export function AppStateProvider({ children }) {
     localStorage.setItem('settings', JSON.stringify(state.settings));
   }, [state.settings]);
 
-  const value = {
+  // Memoize context value to prevent unnecessary re-renders
+  const value = useMemo(() => ({
     state,
     dispatch,
     actions: actionTypes
-  };
+  }), [state, dispatch]);
 
   return (
     <AppStateContext.Provider value={value}>

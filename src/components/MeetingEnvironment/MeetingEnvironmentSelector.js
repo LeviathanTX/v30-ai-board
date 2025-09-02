@@ -3,10 +3,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   MessageSquare, Building, Waves, Clock, Play, Pause, Settings,
   Users, Trophy, Target, ChevronDown, ChevronUp, Timer, UserCheck,
-  UserX, CheckSquare, Square, ToggleLeft, ToggleRight, X, Zap
+  UserX, CheckSquare, Square, ToggleLeft, ToggleRight, X, Zap,
+  Brain, Cpu, Network, Monitor
 } from 'lucide-react';
 import { useAppState } from '../../contexts/AppStateContext';
 import ContextHelp from '../Help/ContextHelp';
+import './MeetingEnvironmentSelector.css';
 
 const MEETING_ENVIRONMENTS = {
   CHAT: {
@@ -18,23 +20,41 @@ const MEETING_ENVIRONMENTS = {
     gradient: 'from-blue-500 to-blue-600',
     features: ['Real-time messaging', 'Document sharing', 'Voice input']
   },
-  BOARDROOM: {
-    id: 'boardroom',
-    name: 'Board Room',
-    description: 'Professional board meeting environment',
-    icon: Building,
-    color: 'gray',
-    gradient: 'from-gray-700 to-gray-800',
-    features: ['Formal atmosphere', 'Structured discussion', 'Meeting minutes']
-  },
   SHARKTANK: {
     id: 'sharktank',
     name: 'Shark Tank',
-    description: 'High-stakes investor pitch environment',
+    description: 'Pitch to celebrity shark investors with neural network enhancements',
     icon: Waves,
     color: 'red',
     gradient: 'from-red-600 to-red-700',
-    features: ['Timed pitches', 'Investor perspective', 'High pressure environment']
+    features: ['Celebrity shark investors', 'Timed pitches', 'Deal probability tracking', 'Neural network backgrounds']
+  },
+  BOARDROOM: {
+    id: 'boardroom',
+    name: 'Executive AI Board',
+    description: 'High-tech boardroom with holographic displays and AI analytics',
+    icon: Brain,
+    color: 'cyan',
+    gradient: 'from-cyan-400 to-blue-600',
+    features: ['Holographic conference table', 'Real-time AI analytics', 'Executive dashboards', 'Strategic insights']
+  },
+  TECHPOD: {
+    id: 'techpod',
+    name: 'AI Investment Pod',
+    description: 'Futuristic investor environment with pure neural network visualization',
+    icon: Cpu,
+    color: 'purple',
+    gradient: 'from-purple-500 to-indigo-600',
+    features: ['Pure neural networks', 'AI investor analysis', 'Quantum computing visuals', 'Tech-enhanced discussions']
+  },
+  INVESTMENTPOD: {
+    id: 'investment-pod',
+    name: 'Sentiment Investment Pod',
+    description: 'Advanced real-time sentiment analysis with dynamic audience feedback visualization',
+    icon: Target,
+    color: 'emerald',
+    gradient: 'from-emerald-500 to-teal-600',
+    features: ['Real-time sentiment analysis', 'Audience engagement tracking', 'Voice emotion detection', 'Investment likelihood prediction', 'Dynamic color backgrounds', 'Live word clouds']
   },
 };
 
@@ -205,7 +225,8 @@ export default function MeetingEnvironmentSelector({
       onAdvisorsChange(newAdvisors);
     }
     
-    setIsOpen(false);
+    // Don't close dropdown - let user continue configuring
+    // setIsOpen(false); // Removed - this was causing the dropdown to close on selection
   };
 
   const currentAdvisors = environmentAdvisors[currentEnvironment] || [];
@@ -237,39 +258,55 @@ export default function MeetingEnvironmentSelector({
       {isOpen && !disabled && (
         <div 
           ref={sidebarRef}
-          className="fixed top-0 right-0 h-full w-80 bg-white border-l border-gray-200 flex flex-col z-40 shadow-xl"
+          className="fixed top-0 right-0 h-full w-96 meeting-sidebar-backdrop flex flex-col z-40 shadow-2xl bounce-in"
+          onClick={(e) => e.stopPropagation()} // Prevent clicks inside from bubbling up
         >
           {/* Header */}
-          <div className="p-4 border-b border-gray-200">
+          <div className="p-6 border-b border-gradient-to-r from-blue-100 to-purple-100 bg-gradient-to-r from-blue-50/50 to-purple-50/50">
             <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-gray-900">Meeting Environment</h3>
+              <div className="flex items-center space-x-3">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg float-animation">
+                  <Building className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold gradient-text-animate">
+                    Meeting Environment
+                  </h3>
+                  <p className="text-sm text-gray-600 font-medium">Choose your perfect advisory setting</p>
+                </div>
+              </div>
               <button
                 onClick={() => setIsOpen(false)}
-                className="p-1 rounded hover:bg-gray-100"
+                className="p-2.5 rounded-xl hover:bg-white/60 hover:scale-110 transition-all duration-200 group shadow-sm glow-on-hover"
               >
-                <X size={18} />
+                <X size={18} className="text-gray-400 group-hover:text-gray-600 transition-colors" />
               </button>
             </div>
           </div>
 
-          {/* Content */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          {/* Content with Custom Scrollbar */}
+          <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6 meeting-environment-scrollbar">
             
             {/* Enhanced Meeting Mode Toggle */}
-            <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center space-x-2">
-                  <Zap className="w-5 h-5 text-purple-600" />
-                  <h4 className="text-sm font-semibold text-gray-800">Enhanced Meeting Mode</h4>
+            <div className="bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200/50 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 glow-on-hover">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-4">
+                  <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-pink-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <Zap className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h4 className="text-lg font-bold text-gray-800">Enhanced Mode</h4>
+                    <p className="text-sm text-purple-600 font-semibold">AI-Powered Facilitation</p>
+                  </div>
                 </div>
                 <button
                   onClick={toggleEnhancedMode}
-                  className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 ${
-                    enhancedMode ? 'bg-purple-600' : 'bg-gray-200'
+                  className={`enhanced-toggle relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 ${
+                    enhancedMode ? 'bg-gradient-to-r from-purple-600 to-pink-600' : 'bg-gray-300'
                   }`}
                 >
                   <span
-                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                    className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-lg ring-0 transition duration-300 ease-in-out ${
                       enhancedMode ? 'translate-x-5' : 'translate-x-0'
                     }`}
                   />
@@ -409,62 +446,118 @@ export default function MeetingEnvironmentSelector({
             )}
 
             {/* Environment Options */}
-            <div className="space-y-2">
-              <h4 className="text-sm font-semibold text-gray-800 mb-2">Environment Options</h4>
-              {Object.values(MEETING_ENVIRONMENTS).map((env) => {
-              const Icon = env.icon;
-              const isSelected = env.id === currentEnvironment;
+            <div className="space-y-4">
+              <div className="flex items-center space-x-2 mb-6">
+                <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
+                  <Building className="w-3 h-3 text-white" />
+                </div>
+                <h4 className="text-base font-bold text-gray-800">Select Environment</h4>
+              </div>
               
-              return (
-                <button
-                  key={env.id}
-                  onClick={() => handleEnvironmentSelect(env.id)}
-                  className={`
-                    w-full text-left p-3 rounded-lg transition-all mb-1
-                    ${isSelected 
-                      ? `bg-gradient-to-r ${env.gradient} text-white shadow-md` 
-                      : 'bg-gray-50 hover:bg-gray-100 text-gray-700'
-                    }
-                  `}
-                >
-                  <div className="flex items-start space-x-3">
-                    <Icon className={`w-6 h-6 mt-1 ${isSelected ? 'text-white' : `text-${env.color}-600`}`} />
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2">
-                        <span className="font-semibold">{env.name}</span>
-                        {isSelected && <div className="w-2 h-2 bg-white rounded-full" />}
-                      </div>
-                      <p className={`text-sm mt-1 ${isSelected ? 'text-white/80' : 'text-gray-600'}`}>
-                        {env.description}
-                      </p>
+              <div className="grid gap-4">
+                {Object.values(MEETING_ENVIRONMENTS).map((env) => {
+                  const Icon = env.icon;
+                  const isSelected = env.id === currentEnvironment;
+                  
+                  return (
+                    <div
+                      key={env.id}
+                      className={`environment-card group relative overflow-hidden rounded-2xl border-2 transition-all duration-300 cursor-pointer glow-on-hover ${
+                        isSelected 
+                          ? 'border-blue-400 shadow-xl ring-4 ring-blue-100 selected' 
+                          : 'border-gray-200 hover:border-gray-300 shadow-md hover:shadow-xl'
+                      }`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEnvironmentSelect(env.id);
+                      }}
+                    >
+                      {/* Background Gradient */}
+                      <div className={`absolute inset-0 bg-gradient-to-br ${env.gradient} ${isSelected ? 'opacity-100' : 'opacity-0'} transition-all duration-500 group-hover:opacity-20`} />
                       
-                      <div className="mt-2 space-y-1">
-                        {env.features.map((feature, index) => (
-                          <div 
-                            key={index}
-                            className={`text-xs flex items-center space-x-1 ${
-                              isSelected ? 'text-white/70' : 'text-gray-500'
-                            }`}
-                          >
-                            <div className={`w-1 h-1 rounded-full ${
-                              isSelected ? 'bg-white/50' : 'bg-gray-400'
+                      {/* Content */}
+                      <div className="relative p-5">
+                        <div className="flex items-start space-x-4">
+                          {/* Icon Container */}
+                          <div className={`flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300 ${
+                            isSelected 
+                              ? 'bg-white/20 shadow-lg' 
+                              : 'bg-gray-100 group-hover:bg-white group-hover:shadow-md'
+                          }`}>
+                            <Icon className={`w-6 h-6 transition-colors duration-300 ${
+                              isSelected ? 'text-white' : `text-${env.color}-600 group-hover:text-${env.color}-700`
                             }`} />
-                            <span>{feature}</span>
                           </div>
-                        ))}
+                          
+                          {/* Content */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between mb-2">
+                              <h5 className={`font-bold text-lg transition-colors duration-300 ${
+                                isSelected ? 'text-white' : 'text-gray-800 group-hover:text-gray-900'
+                              }`}>
+                                {env.name}
+                              </h5>
+                              {isSelected && (
+                                <div className="flex items-center space-x-1">
+                                  <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
+                                  <span className="text-xs text-white/90 font-medium">Active</span>
+                                </div>
+                              )}
+                            </div>
+                            
+                            <p className={`text-sm mb-3 transition-colors duration-300 ${
+                              isSelected ? 'text-white/90' : 'text-gray-600 group-hover:text-gray-700'
+                            }`}>
+                              {env.description}
+                            </p>
+                            
+                            {/* Features */}
+                            <div className="space-y-1.5">
+                              {env.features.map((feature, index) => (
+                                <div 
+                                  key={index}
+                                  className={`flex items-center space-x-2 text-xs transition-colors duration-300 ${
+                                    isSelected ? 'text-white/80' : 'text-gray-500 group-hover:text-gray-600'
+                                  }`}
+                                >
+                                  <div className={`w-1.5 h-1.5 rounded-full transition-colors duration-300 ${
+                                    isSelected ? 'bg-white/60' : 'bg-gray-400 group-hover:bg-gray-500'
+                                  }`} />
+                                  <span className="font-medium">{feature}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {/* Selection Indicator */}
+                        {isSelected && (
+                          <div className="absolute top-3 right-3">
+                            <div className="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
+                              <div className="w-3 h-3 bg-white rounded-full" />
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Hover Glow Effect */}
+                        <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-400/0 via-purple-400/0 to-pink-400/0 group-hover:from-blue-400/10 group-hover:via-purple-400/10 group-hover:to-pink-400/10 transition-all duration-500" />
                       </div>
                     </div>
-                  </div>
-                </button>
-              );
-            })}
+                  );
+                })}
+              </div>
             </div>
           </div>
           
           {/* Footer */}
-          <div className="border-t border-gray-200 p-3 bg-gray-50">
-            <div className="text-xs text-gray-600 text-center">
-              Select an environment to change your meeting experience
+          <div className="border-t border-gradient-to-r from-gray-100 to-gray-200 p-4 bg-gradient-to-r from-gray-50 to-white">
+            <div className="flex items-center justify-center space-x-2">
+              <div className="w-4 h-4 bg-gradient-to-br from-blue-500 to-purple-500 rounded flex items-center justify-center">
+                <Building className="w-2 h-2 text-white" />
+              </div>
+              <p className="text-xs text-gray-600 font-medium">
+                Choose your perfect advisory environment
+              </p>
             </div>
           </div>
         </div>

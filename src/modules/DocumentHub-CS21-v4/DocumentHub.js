@@ -13,6 +13,7 @@ import { documentService } from '../../services/supabase';
 import { useSupabase } from '../../contexts/SupabaseContext';
 import advancedDocumentIntelligence from '../../services/documentIntelligenceV2';
 import DocumentAnalysisPanel from './DocumentAnalysisPanel';
+import logger from '../../utils/logger';
 import DueDiligencePanel from './DueDiligencePanel';
 
 export default function AdvancedDocumentHub() {

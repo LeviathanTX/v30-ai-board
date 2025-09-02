@@ -4,6 +4,7 @@ import { useAppState } from '../contexts/AppStateContext';
 import { useSupabase } from '../contexts/SupabaseContext';
 import persistenceService from '../services/persistenceService';
 import { FEATURES } from '../config/features';
+import logger from '../utils/logger';
 
 /**
  * usePersistence Hook

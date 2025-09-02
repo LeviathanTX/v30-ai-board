@@ -7,6 +7,7 @@ import {
 import { useAppState } from '../../contexts/AppStateContext';
 import { useVoice } from '../../contexts/VoiceContext';
 import aiService from '../../services/aiService';
+import logger from '../../utils/logger';
 
 export default function AIHub() {
   const { state, dispatch } = useAppState();
@@ -221,27 +222,96 @@ How would you like to start?`,
     const files = event.target.files;
     if (!files || files.length === 0) return;
 
-    // Pass to document module
+    const maxFileSize = 5 * 1024 * 1024; // 5MB limit
+    const processedFiles = [];
+
     for (const file of files) {
-      const tempDoc = {
-        id: `temp_${Date.now()}_${file.name}`,
-        name: file.name,
-        type: file.type,
-        size: file.size,
-        created_at: new Date().toISOString()
-      };
-      
-      dispatch({ type: 'ADD_DOCUMENT', payload: tempDoc });
+      if (file.size > maxFileSize) {
+        dispatch({
+          type: 'ADD_NOTIFICATION',
+          payload: {
+            message: `File ${file.name} is too large (max 5MB)`,
+            type: 'error'
+          }
+        });
+        continue;
+      }
+
+      try {
+        // Read file content
+        const content = await readFileContent(file);
+        
+        const processedDoc = {
+          id: `doc_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          name: file.name,
+          type: file.type,
+          size: file.size,
+          created_at: new Date().toISOString(),
+          content: content,
+          extractedData: {
+            text: content,
+            summary: `Document: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`
+          }
+        };
+        
+        dispatch({ type: 'ADD_DOCUMENT', payload: processedDoc });
+        processedFiles.push(file.name);
+      } catch (error) {
+        logger.error('Error processing file:', file.name, error);
+        dispatch({
+          type: 'ADD_NOTIFICATION',
+          payload: {
+            message: `Error processing ${file.name}`,
+            type: 'error'
+          }
+        });
+      }
     }
 
     // Clear the input
     event.target.value = '';
     
-    dispatch({
-      type: 'ADD_NOTIFICATION',
-      payload: {
-        message: `${files.length} file(s) added to documents`,
-        type: 'success'
+    if (processedFiles.length > 0) {
+      dispatch({
+        type: 'ADD_NOTIFICATION',
+        payload: {
+          message: `${processedFiles.length} file(s) uploaded and ready for analysis`,
+          type: 'success'
+        }
+      });
+    }
+  };
+
+  // Helper function to read file content
+  const readFileContent = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      
+      reader.onload = (e) => {
+        let content = e.target.result;
+        
+        // For text files, use as-is
+        if (file.type.startsWith('text/') || file.name.endsWith('.txt') || file.name.endsWith('.md')) {
+          resolve(content);
+        }
+        // For other files, provide a basic description
+        else {
+          const description = `[${file.type || 'Unknown'} file: ${file.name}, Size: ${(file.size / 1024).toFixed(1)} KB]`;
+          resolve(description + '\n\nNote: This file type cannot be directly analyzed. Please convert to text format for full analysis.');
+        }
+      };
+      
+      reader.onerror = () => {
+        reject(new Error(`Failed to read file: ${file.name}`));
+      };
+      
+      // Read as text for text files, otherwise read as data URL for description
+      if (file.type.startsWith('text/') || file.name.endsWith('.txt') || file.name.endsWith('.md')) {
+        reader.readAsText(file);
+      } else {
+        // For non-text files, just create a description
+        const description = `[${file.type || 'Unknown'} file: ${file.name}, Size: ${(file.size / 1024).toFixed(1)} KB]`;
+        resolve(description + '\n\nNote: This file type requires specialized processing. The AI can discuss the file based on its name and type, but cannot analyze the actual content.');
       }
     });
   };
