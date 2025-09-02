@@ -1,12 +1,15 @@
 // src/modules/MeetingHub-CS21-v1/MeetingHub.js
 import React, { useState } from 'react';
-import { Calendar, Clock, Users, Plus, Monitor } from 'lucide-react';
+import { Calendar, Clock, Users, Plus, Monitor, FileText, CheckSquare, Square } from 'lucide-react';
 import { useAppState } from '../../contexts/AppStateContext';
 import { format } from 'date-fns';
 
 export default function MeetingHub() {
-  const { state } = useAppState();
+  const { state, dispatch } = useAppState();
   const [selectedPlatform, setSelectedPlatform] = useState('meet');
+  const [selectedAdvisors, setSelectedAdvisors] = useState([]);
+  const [selectedDocuments, setSelectedDocuments] = useState([]);
+  const [meetingTitle, setMeetingTitle] = useState('');
 
   const platforms = [
     {
@@ -55,6 +58,67 @@ export default function MeetingHub() {
       status: 'scheduled'
     }
   ];
+
+  // Handle advisor selection
+  const handleAdvisorToggle = (advisor) => {
+    setSelectedAdvisors(prev => {
+      const isSelected = prev.some(a => a.id === advisor.id);
+      if (isSelected) {
+        return prev.filter(a => a.id !== advisor.id);
+      } else {
+        return [...prev, advisor];
+      }
+    });
+  };
+
+  // Handle document selection
+  const handleDocumentToggle = (document) => {
+    setSelectedDocuments(prev => {
+      const isSelected = prev.some(d => d.id === document.id);
+      if (isSelected) {
+        return prev.filter(d => d.id !== document.id);
+      } else {
+        return [...prev, document];
+      }
+    });
+  };
+
+  // Create meeting with selected documents
+  const handleCreateMeeting = () => {
+    if (!meetingTitle.trim()) {
+      alert('Please enter a meeting title');
+      return;
+    }
+    
+    if (selectedAdvisors.length === 0) {
+      alert('Please select at least one advisor');
+      return;
+    }
+
+    // Set meeting documents in the app state
+    dispatch({
+      type: 'SET_MEETING_DOCUMENTS',
+      payload: selectedDocuments
+    });
+
+    // Start the meeting (you could also navigate to a meeting room here)
+    dispatch({
+      type: 'START_MEETING',
+      payload: {
+        title: meetingTitle,
+        advisors: selectedAdvisors,
+        platform: selectedPlatform,
+        documents: selectedDocuments
+      }
+    });
+
+    alert(`Meeting "${meetingTitle}" created with ${selectedAdvisors.length} advisors and ${selectedDocuments.length} documents!`);
+    
+    // Reset form
+    setMeetingTitle('');
+    setSelectedAdvisors([]);
+    setSelectedDocuments([]);
+  };
 
   return (
     <div className="h-full flex flex-col bg-gray-50">
@@ -157,6 +221,8 @@ export default function MeetingHub() {
                 </label>
                 <input
                   type="text"
+                  value={meetingTitle}
+                  onChange={(e) => setMeetingTitle(e.target.value)}
                   placeholder="e.g., Weekly Strategy Review"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
@@ -164,16 +230,58 @@ export default function MeetingHub() {
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Select Advisors
+                  Select Advisors ({selectedAdvisors.length} selected)
                 </label>
-                <div className="space-y-2">
-                  {state.selectedAdvisors.slice(0, 3).map(advisor => (
-                    <label key={advisor.id} className="flex items-center space-x-3">
-                      <input type="checkbox" className="rounded text-blue-600" defaultChecked />
-                      <span className="text-2xl">{advisor.avatar_emoji}</span>
-                      <span className="text-sm text-gray-700">{advisor.name}</span>
-                    </label>
-                  ))}
+                <div className="max-h-32 overflow-y-auto space-y-2 border rounded-lg p-2">
+                  {(state.advisors || []).map(advisor => {
+                    const isSelected = selectedAdvisors.some(a => a.id === advisor.id);
+                    return (
+                      <label key={advisor.id} className="flex items-center space-x-3 cursor-pointer hover:bg-gray-50 p-1 rounded">
+                        <input 
+                          type="checkbox" 
+                          checked={isSelected}
+                          onChange={() => handleAdvisorToggle(advisor)}
+                          className="rounded text-blue-600" 
+                        />
+                        <span className="text-xl">{advisor.avatar_emoji}</span>
+                        <span className="text-sm text-gray-700">{advisor.name}</span>
+                        <span className="text-xs text-gray-500">({advisor.role})</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Select Documents ({selectedDocuments.length} selected)
+                </label>
+                <div className="max-h-32 overflow-y-auto space-y-2 border rounded-lg p-2">
+                  {(state.documents || []).length === 0 ? (
+                    <div className="text-sm text-gray-500 p-2 text-center">
+                      <FileText className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+                      No documents uploaded yet. Upload documents in the Document Hub to include them in meetings.
+                    </div>
+                  ) : (
+                    (state.documents || []).map(document => {
+                      const isSelected = selectedDocuments.some(d => d.id === document.id);
+                      return (
+                        <label key={document.id} className="flex items-center space-x-3 cursor-pointer hover:bg-gray-50 p-1 rounded">
+                          <input 
+                            type="checkbox" 
+                            checked={isSelected}
+                            onChange={() => handleDocumentToggle(document)}
+                            className="rounded text-blue-600" 
+                          />
+                          <FileText className="w-4 h-4 text-gray-600" />
+                          <span className="text-sm text-gray-700 flex-1">{document.name}</span>
+                          <span className="text-xs text-gray-500">
+                            {document.size ? `${(document.size / 1024).toFixed(1)} KB` : ''}
+                          </span>
+                        </label>
+                      );
+                    })
+                  )}
                 </div>
               </div>
               
@@ -181,15 +289,23 @@ export default function MeetingHub() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Platform
                 </label>
-                <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                  <option>Google Meet</option>
-                  <option>Zoom</option>
-                  <option>Microsoft Teams</option>
+                <select 
+                  value={selectedPlatform} 
+                  onChange={(e) => setSelectedPlatform(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="meet">Google Meet</option>
+                  <option value="zoom">Zoom</option>
+                  <option value="teams">Microsoft Teams</option>
                 </select>
               </div>
               
-              <button className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
-                Create Meeting Link
+              <button 
+                onClick={handleCreateMeeting}
+                disabled={!meetingTitle.trim() || selectedAdvisors.length === 0}
+                className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:bg-gray-300 disabled:cursor-not-allowed"
+              >
+                Create Meeting ({selectedAdvisors.length} advisors, {selectedDocuments.length} documents)
               </button>
             </div>
           </div>
