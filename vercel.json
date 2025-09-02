@@ -2,11 +2,6 @@
   "buildCommand": "CI=false npm run build",
   "outputDirectory": "build",
   "installCommand": "npm install --legacy-peer-deps",
-  "functions": {
-    "api/**/*.js": {
-      "runtime": "@vercel/node@2"
-    }
-  },
   "rewrites": [
     {
       "source": "/manifest.json",
