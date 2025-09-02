@@ -45,8 +45,9 @@ export default async function handler(request) {
       );
     }
     
-    if (!apiKey.trim() || apiKey.trim().length < 10) {
-      console.log('Invalid API key format:', apiKey);
+    const trimmedKey = apiKey.trim();
+    if (!trimmedKey || trimmedKey.length < 5) {
+      console.log('Invalid API key format - too short:', trimmedKey.length);
       return new Response(
         JSON.stringify({ error: 'Invalid API key format' }), 
         { 
@@ -67,7 +68,7 @@ export default async function handler(request) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': apiKey,
+        'x-api-key': trimmedKey,
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify(anthropicBody),

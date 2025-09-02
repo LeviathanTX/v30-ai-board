@@ -122,7 +122,7 @@ export const documentService = {
         });
       
       if (error) {
-        logger.error('Storage upload error:', error);
+        logger.debug('Storage upload error (demo mode):', error.message);
         // For demo mode, continue without actual upload
         return {
           data: {
