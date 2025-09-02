@@ -2,9 +2,18 @@
   "buildCommand": "CI=false npm run build",
   "outputDirectory": "build",
   "installCommand": "npm install --legacy-peer-deps",
+  "functions": {
+    "api/**/*.js": {
+      "runtime": "nodejs18.x"
+    }
+  },
   "rewrites": [
     {
-      "source": "/((?!static|api|manifest\\.json|favicon\\.ico|robots\\.txt|logo192\\.png|logo512\\.png).*)",
+      "source": "/manifest.json",
+      "destination": "/api/manifest"
+    },
+    {
+      "source": "/((?!api|static|favicon\\.ico|robots\\.txt|logo192\\.png|logo512\\.png).*)",
       "destination": "/index.html"
     }
   ],
