@@ -2,30 +2,21 @@
   "buildCommand": "CI=false npm run build",
   "outputDirectory": "build",
   "installCommand": "npm install --legacy-peer-deps",
-  "routes": [
+  "rewrites": [
     {
-      "src": "/manifest.json",
-      "dest": "/manifest.json"
-    },
+      "source": "/((?!static|api|manifest\\.json|favicon\\.ico|robots\\.txt|logo192\\.png|logo512\\.png).*)",
+      "destination": "/index.html"
+    }
+  ],
+  "headers": [
     {
-      "src": "/favicon.ico",
-      "dest": "/favicon.ico"
-    },
-    {
-      "src": "/robots.txt",
-      "dest": "/robots.txt"
-    },
-    {
-      "src": "/api/(.*)",
-      "dest": "/api/$1"
-    },
-    {
-      "src": "/static/(.*)",
-      "dest": "/static/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        }
+      ]
     }
   ],
   "env": {
