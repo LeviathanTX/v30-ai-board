@@ -61,27 +61,36 @@ export default function SettingsHub() {
       setSettings(prev => ({ ...prev, ...JSON.parse(savedSettings) }));
     }
     
-    // Load AI service API keys
-    const loadedAiServices = { ...aiServices };
-    Object.keys(loadedAiServices).forEach(service => {
-      const storedKey = localStorage.getItem(`${service}_api_key`);
-      if (storedKey) {
-        loadedAiServices[service].apiKey = storedKey;
-        loadedAiServices[service].connected = true;
-      }
-    });
-    setAiServices(loadedAiServices);
+    // Load AI service API keys - initialize fresh objects to avoid circular dependencies
+    const initialAiServices = {
+      openai: { name: 'OpenAI', apiKey: '', connected: false, models: ['gpt-4o', 'gpt-4o-mini'] },
+      deepseek: { name: 'DeepSeek', apiKey: '', connected: false, models: ['deepseek-chat'] },
+      anthropic: { name: 'Claude (Anthropic)', apiKey: '', connected: false, models: ['claude-3-5-sonnet-20241022'] },
+      google: { name: 'Google Gemini', apiKey: '', connected: false, models: ['gemini-1.5-pro'] }
+    };
     
-    // Load Voice service API keys
-    const loadedVoiceServices = { ...voiceServices };
-    Object.keys(loadedVoiceServices).forEach(service => {
+    Object.keys(initialAiServices).forEach(service => {
       const storedKey = localStorage.getItem(`${service}_api_key`);
       if (storedKey) {
-        loadedVoiceServices[service].apiKey = storedKey;
-        loadedVoiceServices[service].connected = true;
+        initialAiServices[service].apiKey = storedKey;
+        initialAiServices[service].connected = true;
       }
     });
-    setVoiceServices(loadedVoiceServices);
+    setAiServices(initialAiServices);
+    
+    // Load Voice service API keys - initialize fresh objects to avoid circular dependencies  
+    const initialVoiceServices = {
+      openai_realtime: { name: 'OpenAI Realtime', apiKey: '', connected: false, models: ['gpt-4o-realtime-preview'] }
+    };
+    
+    Object.keys(initialVoiceServices).forEach(service => {
+      const storedKey = localStorage.getItem(`${service}_api_key`);
+      if (storedKey) {
+        initialVoiceServices[service].apiKey = storedKey;
+        initialVoiceServices[service].connected = true;
+      }
+    });
+    setVoiceServices(initialVoiceServices);
   }, []);
 
   // Voice control effects for Advisory Board
@@ -302,6 +311,7 @@ export default function SettingsHub() {
 
   // AI Service management functions
   const handleAiServiceKeyChange = (service, value) => {
+    // Update the state immediately for responsive UI
     setAiServices(prev => ({
       ...prev,
       [service]: {
@@ -310,9 +320,20 @@ export default function SettingsHub() {
         error: null
       }
     }));
+    
+    // Save to localStorage with debouncing to prevent excessive writes
+    clearTimeout(window[`${service}_apikey_timeout`]);
+    window[`${service}_apikey_timeout`] = setTimeout(() => {
+      if (value.trim()) {
+        localStorage.setItem(`${service}_api_key`, value.trim());
+      } else {
+        localStorage.removeItem(`${service}_api_key`);
+      }
+    }, 500);
   };
   
   const handleVoiceServiceKeyChange = (service, value) => {
+    // Update the state immediately for responsive UI
     setVoiceServices(prev => ({
       ...prev,
       [service]: {
@@ -321,6 +342,16 @@ export default function SettingsHub() {
         error: null
       }
     }));
+    
+    // Save to localStorage with debouncing to prevent excessive writes
+    clearTimeout(window[`${service}_voicekey_timeout`]);
+    window[`${service}_voicekey_timeout`] = setTimeout(() => {
+      if (value.trim()) {
+        localStorage.setItem(`${service}_api_key`, value.trim());
+      } else {
+        localStorage.removeItem(`${service}_api_key`);
+      }
+    }, 500);
   };
   
   const toggleKeyVisibility = (service, isVoice = false) => {
