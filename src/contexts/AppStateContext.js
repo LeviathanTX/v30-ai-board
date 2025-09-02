@@ -333,6 +333,14 @@ const initialState = {
   lastVoiceCommand: null,
   searchQuery: '',
   
+  // AI Services
+  aiServices: {
+    anthropic: { name: 'Claude (Anthropic)', connected: false, models: ['claude-3-5-sonnet-20241022'] },
+    openai: { name: 'OpenAI', connected: false, models: ['gpt-4o', 'gpt-4o-mini'] },
+    deepseek: { name: 'DeepSeek', connected: false, models: ['deepseek-chat'] },
+    google: { name: 'Google Gemini', connected: false, models: ['gemini-1.5-pro'] }
+  },
+
   // Settings
   settings: {
     theme: 'light',
@@ -606,7 +614,7 @@ function appStateReducer(state, action) {
         aiServices: {
           ...state.aiServices,
           [action.payload.service]: {
-            ...state.aiServices[action.payload.service],
+            ...(state.aiServices?.[action.payload.service] || {}),
             ...action.payload.config
           }
         }

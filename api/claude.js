@@ -55,6 +55,11 @@ export default async function handler(request) {
 
     const data = await response.json();
 
+    // Log response for debugging
+    if (!response.ok) {
+      console.error('Anthropic API Error:', response.status, data);
+    }
+
     // Return response with CORS headers
     return new Response(JSON.stringify(data), {
       status: response.status,
